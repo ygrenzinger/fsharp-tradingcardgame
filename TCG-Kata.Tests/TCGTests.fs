@@ -4,10 +4,7 @@ open TCG
 open Xunit
 open Swensen.Unquote
 
-[<Fact>]
-let ``First command CreateGame`` () =
-    let events = apply CreateGame []
-    test <@ events = [
+let eventsHistory = [
         GameCreated;
         HandInitiated {
             Player = Player1
@@ -26,6 +23,23 @@ let ``First command CreateGame`` () =
             Player = Player2
             Card = 7
         };
+    ]
+
+[<Fact>]
+let ``First command CreateGame`` () =
+    let events = apply CreateGame []
+    test <@ events = eventsHistory @>
+
+[<Fact>]
+let ``Begining of the turn the active player get mana`` () =
+    let events = apply StartNewTurn eventsHistory
+    test <@ events = [
+        PlayerGotMana Player1;
+        PlayerGotManaMax Player1;
+        PlayerPickedACard {
+            Player = Player1
+            Card = 0
+        }
     ] @>
 
 [<Fact>]

@@ -19,12 +19,15 @@ type PlayerPickedACard = {
 
 type Cmd =
     | CreateGame
+    | StartNewTurn
 
 type Evt =
     | GameCreated
     | FirstPlayerChosen of PlayerChosen
     | HandInitiated of HandInitiated
     | PlayerPickedACard of PlayerPickedACard
+    | PlayerGotMana of PlayerChosen
+    | PlayerGotManaMax of PlayerChosen
 
 type Player = {
     Deck : Card list
