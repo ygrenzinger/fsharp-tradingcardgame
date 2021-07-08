@@ -5,9 +5,28 @@ open Xunit
 open Swensen.Unquote
 
 [<Fact>]
-let ``Default Game`` () =
+let ``First command CreateGame`` () =
     let events = apply CreateGame []
-    test <@ events = [GameCreated] @>
+    test <@ events = [
+        GameCreated;
+        HandInitiated {
+            Player = Player1
+            Card1 = 2
+            Card2 = 4
+            Card3 = 5
+        };
+        HandInitiated {
+            Player = Player2
+            Card1 = 3
+            Card2 = 1
+            Card3 = 1
+        };
+        FirstPlayerChosen Player1;
+        PlayerPickedACard {
+            Player = Player2
+            Card = 7
+        };
+    ] @>
 
 [<Fact>]
 let ``Create a game with initial state`` () =
