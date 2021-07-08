@@ -5,6 +5,11 @@ open Xunit
 open Swensen.Unquote
 
 [<Fact>]
+let ``Default Game`` () =
+    let events = apply CreateGame []
+    test <@ events = [GameCreated] @>
+
+[<Fact>]
 let ``Create a game with initial state`` () =
     let game = hydrate [GameCreated]
     test <@ game.Player1 = { Mana = 0; Health = 30; Deck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = [] } @>
