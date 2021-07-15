@@ -84,24 +84,29 @@ type CommandHandler = {
 
 let apply (user: Unit -> PlayerChosen)(cmd: Cmd)(history: Evt list) : Evt list =
     match cmd with
-    | CreateGame -> [GameCreated;
-        HandInitiated {
-            Player = Player1
-            Card1 = 2
-            Card2 = 4
-            Card3 = 5
-        };
-        HandInitiated {
-            Player = Player2
-            Card1 = 3
-            Card2 = 1
-            Card3 = 1
-        };
-        FirstPlayerChosen Player1;
-        PlayerPickedACard {
-            Player = Player2
-            Card = 7
-        };]
+    | CreateGame -> 
+        let firstPlayer = user()
+        let opponent = match firstPlayer with
+                        | Player1 -> Player2
+                        | Player2 -> Player1
+        [GameCreated;
+            HandInitiated {
+                Player = Player1
+                Card1 = 2
+                Card2 = 4
+                Card3 = 5
+            };
+            HandInitiated {
+                Player = Player2
+                Card1 = 3
+                Card2 = 1
+                Card3 = 1
+            };
+            FirstPlayerChosen firstPlayer;
+            PlayerPickedACard {
+                Player = opponent
+                Card = 7
+            };]
     | StartNewTurn -> [
         PlayerGotMana Player1;
         PlayerGotManaMax Player1;
