@@ -77,7 +77,8 @@ let hydrate (events: Evt list) : Game =
     } 
 
 let apply (cmd: Cmd)(history: Evt list) : Evt list =
-    [GameCreated;
+    match cmd with
+    | CreateGame -> [GameCreated;
         HandInitiated {
             Player = Player1
             Card1 = 2
@@ -95,3 +96,11 @@ let apply (cmd: Cmd)(history: Evt list) : Evt list =
             Player = Player2
             Card = 7
         };]
+    | StartNewTurn -> [
+        PlayerGotMana Player1;
+        PlayerGotManaMax Player1;
+        PlayerPickedACard {
+            Player = Player1
+            Card = 0
+        }
+    ]
