@@ -43,6 +43,20 @@ let ``Begining of the turn the active player get mana`` () =
     ] @>
 
 [<Fact>]
+let ``The active player end it's turn``() =
+    let event = apply EndTurn (eventsHistory @ [
+        PlayerGotMana Player1;
+        PlayerGotManaMax Player1;
+        PlayerPickedACard {
+            Player = Player1
+            Card = 0
+        }
+    ])
+    test <@ event = [
+        PlayerActiveEndedTurn Player1;
+    ] @>
+
+[<Fact>]
 let ``Create a game with initial state`` () =
     let game = hydrate [GameCreated]
     test <@ game.Player1 = { Mana = 0; Health = 30; Deck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = [] } @>

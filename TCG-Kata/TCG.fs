@@ -20,6 +20,7 @@ type PlayerPickedACard = {
 type Cmd =
     | CreateGame
     | StartNewTurn
+    | EndTurn
 
 type Evt =
     | GameCreated
@@ -28,6 +29,7 @@ type Evt =
     | PlayerPickedACard of PlayerPickedACard
     | PlayerGotMana of PlayerChosen
     | PlayerGotManaMax of PlayerChosen
+    | PlayerActiveEndedTurn of PlayerChosen
 
 type Player = {
     Deck : Card list
@@ -102,5 +104,5 @@ let apply (cmd: Cmd)(history: Evt list) : Evt list =
         PlayerPickedACard {
             Player = Player1
             Card = 0
-        }
-    ]
+        }]
+    | EndTurn -> [PlayerActiveEndedTurn Player1]
