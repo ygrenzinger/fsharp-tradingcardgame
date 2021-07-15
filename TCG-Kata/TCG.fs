@@ -76,9 +76,13 @@ let hydrate (events: Evt list) : Game =
         Player1 = { Deck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = []; Mana = 0; Health = 30 }
         Player2 = { Deck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = []; Mana = 0; Health = 30 }
         Current = None
-    } 
+    }
 
-let apply (cmd: Cmd)(history: Evt list) : Evt list =
+type CommandHandler = {
+    handle : Cmd -> Evt list -> Evt list
+}
+
+let apply (user: Unit -> PlayerChosen)(cmd: Cmd)(history: Evt list) : Evt list =
     match cmd with
     | CreateGame -> [GameCreated;
         HandInitiated {
@@ -106,3 +110,5 @@ let apply (cmd: Cmd)(history: Evt list) : Evt list =
             Card = 0
         }]
     | EndTurn -> [PlayerActiveEndedTurn Player1]
+
+let createCommandHandler randomPlayer : CommandHandler = { handle = apply randomPlayer }
