@@ -14,9 +14,9 @@ let eventsHistory = [
         };
         HandInitiated {
             Player = Player2
-            Card1 = 3
-            Card2 = 1
-            Card3 = 1
+            Card1 = 2
+            Card2 = 4
+            Card3 = 5
         };
         FirstPlayerChosen Player1;
         PlayerPickedACard {
@@ -25,12 +25,10 @@ let eventsHistory = [
         };
     ]
 
-let defaultCommandHandler = createCommandHandler (fun () -> Player1)
-
+let defaultCommandHandler = createCommandHandler (fun () -> Player1) (fun () -> 2, 4, 5)
 
 let ``First command CreateGame`` player1 player2 =
-    let commandHandler = createCommandHandler (fun () -> player1)
-    // TODO : "randomize" le choix des cartes
+    let commandHandler = createCommandHandler (fun () -> player1) (fun () -> 2, 4, 5)
     let events = commandHandler.handle CreateGame []
     test <@ events = [
         GameCreated;
@@ -42,9 +40,9 @@ let ``First command CreateGame`` player1 player2 =
         };
         HandInitiated {
             Player = Player2
-            Card1 = 3
-            Card2 = 1
-            Card3 = 1
+            Card1 = 2
+            Card2 = 4
+            Card3 = 5
         };
         FirstPlayerChosen player1;
         PlayerPickedACard {

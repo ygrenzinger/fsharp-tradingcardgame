@@ -82,25 +82,32 @@ type CommandHandler = {
     handle : Cmd -> Evt list -> Evt list
 }
 
-let apply (chooseFirstPlayer: Unit -> PlayerChosen) (cmd: Cmd) (history: Evt list) : Evt list =
+let apply (chooseFirstPlayer: Unit -> PlayerChosen)
+          (pickHand: Unit -> Card * Card * Card)
+          (cmd: Cmd)
+          (history: Evt list)
+          : Evt list =
+              
     match cmd with
     | CreateGame -> 
         let firstPlayer = chooseFirstPlayer ()
         let opponent = match firstPlayer with
                        | Player1 -> Player2
                        | Player2 -> Player1
+        let player1Card1, player1Card2, player1Card3 = pickHand ()
+        let player2Card1, player2Card2, player2Card3 = pickHand ()
         [GameCreated;
             HandInitiated {
                 Player = Player1
-                Card1 = 2
-                Card2 = 4
-                Card3 = 5
+                Card1 = player1Card1
+                Card2 = player1Card2
+                Card3 = player1Card3
             };
             HandInitiated {
                 Player = Player2
-                Card1 = 3
-                Card2 = 1
-                Card3 = 1
+                Card1 = player2Card1
+                Card2 = player2Card2
+                Card3 = player2Card3
             };
             FirstPlayerChosen firstPlayer;
             PlayerPickedACard {
@@ -118,4 +125,6 @@ let apply (chooseFirstPlayer: Unit -> PlayerChosen) (cmd: Cmd) (history: Evt lis
     
     | EndTurn -> [PlayerActiveEndedTurn Player1]
 
-let createCommandHandler randomPlayer : CommandHandler = { handle = apply randomPlayer }
+let createCommandHandler randomPlayer pickHand : CommandHandler = {
+    handle = apply randomPlayer pickHand
+}
