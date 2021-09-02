@@ -30,6 +30,7 @@ let defaultCommandHandler = createCommandHandler (fun () -> Player1)
 
 let ``First command CreateGame`` player1 player2 =
     let commandHandler = createCommandHandler (fun () -> player1)
+    // TODO : "randomize" le choix des cartes
     let events = commandHandler.handle CreateGame []
     test <@ events = [
         GameCreated;
@@ -60,6 +61,7 @@ let ``Create Game with Player2 as First player`` () = ``First command CreateGame
 
 [<Fact>]
 let ``Begining of the turn the active player get mana`` () =
+    // TODO : Same avec le player 2
     let events = defaultCommandHandler.handle StartNewTurn eventsHistory
     test <@ events = [
         PlayerGotMana Player1;
@@ -72,6 +74,7 @@ let ``Begining of the turn the active player get mana`` () =
 
 [<Fact>]
 let ``The active player end it's turn``() =
+    // TODO : Same avec le player 2
     let event = defaultCommandHandler.handle EndTurn (eventsHistory @ [
         PlayerGotMana Player1;
         PlayerGotManaMax Player1;
