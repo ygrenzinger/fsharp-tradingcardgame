@@ -92,9 +92,8 @@ type CommandHandler = {
     handle : Cmd -> Evt list -> Evt list
 }
 
-let apply (cmd: Cmd)
-          (history: Evt list)
-          : Evt list =
+let apply (cmd: Cmd) (history: Evt list) : Evt list =
+    
     match cmd with
     | CreateGame create -> 
         let player1Card1, player1Card2, player1Card3 = create.PickHand ()

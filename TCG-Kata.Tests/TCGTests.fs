@@ -143,3 +143,20 @@ let ``Player should pick cards from his deck for his initial hand`` () =
     let game = hydrate [GameCreated; handInitiatedPlayer1; handInitiatedPlayer2]
     test <@ game.Player1 = { Mana = 0; Health = 30; Deck = [0;0;1;1;2;2;3;3;3;3;4;4;5;6;6;7;8]; Hand = [2;4;5] } @>
     test <@ game.Player2 = { Mana = 0; Health = 30; Deck = [0;0;2;2;2;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = [3;1;1] } @>
+    
+[<Fact>]
+let ``Impossible to draw a card which is not in the deck`` () =
+    let handInitiatedPlayer1 = HandInitiated {
+        Player = Player1
+        Card1 = 6
+        Card2 = 7
+        Card3 = 8
+    }
+    let handInitiatedPlayer2 = HandInitiated {
+        Player = Player2
+        Card1 = 3
+        Card2 = 1
+        Card3 = 1
+    }
+    test <@ true = false @>
+    
