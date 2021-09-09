@@ -25,11 +25,12 @@ let eventsHistory = [
         };
     ]
 
-let defaultCommandHandler = createCommandHandler (fun () -> Player1) (fun () -> 2, 4, 5)
+let defaultCommandHandler = createCommandHandler
 
 let ``First command CreateGame`` player1 player2 =
-    let commandHandler = createCommandHandler (fun () -> player1) (fun () -> 2, 4, 5)
-    let events = commandHandler.handle CreateGame []
+    let commandHandler = createCommandHandler
+    let cmd = CreateGame ((fun () -> player1), (fun () -> 2, 4, 5))
+    let events = commandHandler.handle cmd []
     test <@ events = [
         GameCreated;
         HandInitiated {
