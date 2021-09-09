@@ -27,12 +27,11 @@ let eventsHistory = [
 
 let defaultCommandHandler = createCommandHandler
 
-let ``First command CreateGame`` player1 player2 =
+[<Fact>]
+let ``First command CreateGame`` () =
     let commandHandler = createCommandHandler
     let cmd = CreateGame {
-        ChooseFirstPlayer = fun () -> player1
         PickHand = fun () -> 2, 4, 5
-        PickCard = fun _ -> 7
     }
     let events = commandHandler.handle cmd []
     test <@ events = [
@@ -48,7 +47,33 @@ let ``First command CreateGame`` player1 player2 =
             Card1 = 2
             Card2 = 4
             Card3 = 5
+        }
+    ] @>
+    
+let ``Begin game when command BeginGame`` player1 player2 =
+    let commandHandler = createCommandHandler
+    let cmd = BeginGame {
+        ChooseFirstPlayer = fun () -> player1
+        PickCard = fun _ -> 7
+    }
+    
+    let history = [
+        GameCreated;
+        HandInitiated {
+            Player = Player1
+            Card1 = 2
+            Card2 = 4
+            Card3 = 5
         };
+        HandInitiated {
+            Player = Player2
+            Card1 = 2
+            Card2 = 4
+            Card3 = 5
+        }]
+    
+    let events = commandHandler.handle cmd history
+    test <@ events = [
         FirstPlayerChosen player1;
         PlayerPickedACard {
             Player = player2
@@ -57,10 +82,10 @@ let ``First command CreateGame`` player1 player2 =
     ] @>
 
 [<Fact>]
-let ``Create Game with Player1 as First player`` () = ``First command CreateGame`` Player1 Player2
+let ``Begin Game with Player1 as First player`` () = ``Begin game when command BeginGame`` Player1 Player2
 
 [<Fact>]
-let ``Create Game with Player2 as First player`` () = ``First command CreateGame`` Player2 Player1
+let ``Begin Game with Player2 as First player`` () = ``Begin game when command BeginGame`` Player2 Player1
 
 [<Fact>]
 let ``Begining of the turn the active player get mana`` () =

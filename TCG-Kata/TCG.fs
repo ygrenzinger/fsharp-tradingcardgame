@@ -18,12 +18,17 @@ type PlayerPickedACard = {
 }
 
 type CreateGame = {
-    ChooseFirstPlayer: Unit -> PlayerChosen
     PickHand: Unit -> Card * Card * Card
+}
+
+type BeginGame = {
+    ChooseFirstPlayer: Unit -> PlayerChosen
     PickCard: Card list -> Card
 }
+
 type Cmd =
     | CreateGame of CreateGame
+    | BeginGame of BeginGame
     | StartNewTurn
     | EndTurn
 
@@ -92,14 +97,10 @@ let apply (cmd: Cmd)
           : Evt list =
     match cmd with
     | CreateGame create -> 
-        let firstPlayer = create.ChooseFirstPlayer ()
-        let opponent = match firstPlayer with
-                       | Player1 -> Player2
-                       | Player2 -> Player1
         let player1Card1, player1Card2, player1Card3 = create.PickHand ()
         let player2Card1, player2Card2, player2Card3 = create.PickHand ()
         
-        let historyPart1 = [GameCreated;
+        [GameCreated;
             HandInitiated {
                 Player = Player1
                 Card1 = player1Card1
@@ -111,19 +112,25 @@ let apply (cmd: Cmd)
                 Card1 = player2Card1
                 Card2 = player2Card2
                 Card3 = player2Card3
-            };
-            FirstPlayerChosen firstPlayer]
+            }]
         
-        let state = hydrate historyPart1
+    | BeginGame beginGame -> 
+        let firstPlayer = beginGame.ChooseFirstPlayer ()
+        let opponent = match firstPlayer with
+                       | Player1 -> Player2
+                       | Player2 -> Player1
+        
+        let state = hydrate history
         let cardPicked =
             match firstPlayer with
-            | Player1 -> create.PickCard state.Player2.Deck
-            | Player2 -> create.PickCard state.Player1.Deck
+            | Player1 -> beginGame.PickCard state.Player2.Deck
+            | Player2 -> beginGame.PickCard state.Player1.Deck
             
-        historyPart1@[PlayerPickedACard {
-                         Player = opponent
-                         Card = cardPicked
-                     }]
+        [FirstPlayerChosen firstPlayer;
+            PlayerPickedACard {
+                 Player = opponent
+                 Card = cardPicked
+            }]
         
     | StartNewTurn -> [
         PlayerGotMana Player1;
