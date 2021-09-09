@@ -17,8 +17,13 @@ type PlayerPickedACard = {
     Card : Card
 }
 
+type CreateGame = {
+    ChooseFirstPlayer: Unit -> PlayerChosen
+    PickHand: Unit -> Card * Card * Card
+    PickCard: Card list -> Card
+}
 type Cmd =
-    | CreateGame of chooseFirstPlayer: (Unit -> PlayerChosen) * pickHand: (Unit -> Card * Card * Card)
+    | CreateGame of CreateGame
     | StartNewTurn
     | EndTurn
 
@@ -85,16 +90,16 @@ type CommandHandler = {
 let apply (cmd: Cmd)
           (history: Evt list)
           : Evt list =
-              
     match cmd with
-    | CreateGame (chooseFirstPlayer, pickHand) -> 
-        let firstPlayer = chooseFirstPlayer ()
+    | CreateGame create -> 
+        let firstPlayer = create.ChooseFirstPlayer ()
         let opponent = match firstPlayer with
                        | Player1 -> Player2
                        | Player2 -> Player1
-        let player1Card1, player1Card2, player1Card3 = pickHand ()
-        let player2Card1, player2Card2, player2Card3 = pickHand ()
-        [GameCreated;
+        let player1Card1, player1Card2, player1Card3 = create.PickHand ()
+        let player2Card1, player2Card2, player2Card3 = create.PickHand ()
+        
+        let historyPart1 = [GameCreated;
             HandInitiated {
                 Player = Player1
                 Card1 = player1Card1
@@ -107,11 +112,18 @@ let apply (cmd: Cmd)
                 Card2 = player2Card2
                 Card3 = player2Card3
             };
-            FirstPlayerChosen firstPlayer;
-            PlayerPickedACard {
-                Player = opponent
-                Card = 7
-            };]
+            FirstPlayerChosen firstPlayer]
+        
+        let state = hydrate historyPart1
+        let cardPicked =
+            match firstPlayer with
+            | Player1 -> create.PickCard state.Player2.Deck
+            | Player2 -> create.PickCard state.Player1.Deck
+            
+        historyPart1@[PlayerPickedACard {
+                         Player = opponent
+                         Card = cardPicked
+                     }]
         
     | StartNewTurn -> [
         PlayerGotMana Player1;

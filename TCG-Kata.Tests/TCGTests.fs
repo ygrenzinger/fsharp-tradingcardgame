@@ -29,7 +29,11 @@ let defaultCommandHandler = createCommandHandler
 
 let ``First command CreateGame`` player1 player2 =
     let commandHandler = createCommandHandler
-    let cmd = CreateGame ((fun () -> player1), (fun () -> 2, 4, 5))
+    let cmd = CreateGame {
+        ChooseFirstPlayer = fun () -> player1
+        PickHand = fun () -> 2, 4, 5
+        PickCard = fun _ -> 7
+    }
     let events = commandHandler.handle cmd []
     test <@ events = [
         GameCreated;
