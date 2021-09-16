@@ -54,6 +54,10 @@ type Game =  {
     Current : PlayerChosen option
 }
 
+type Error = {
+    Message: string
+}
+
 let pickCardFromDeck player card =
     let rec removeFirst deck =
         match deck with
@@ -89,17 +93,17 @@ let hydrate (events: Evt list) : Game =
     }
 
 type CommandHandler = {
-    handle : Cmd -> Evt list -> Evt list
+    handle : Cmd -> Evt list -> Result<Evt list, Error>
 }
 
-let apply (cmd: Cmd) (history: Evt list) : Evt list =
+let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
     
     match cmd with
     | CreateGame create -> 
         let player1Card1, player1Card2, player1Card3 = create.PickHand ()
         let player2Card1, player2Card2, player2Card3 = create.PickHand ()
         
-        [GameCreated;
+        Result.Ok [GameCreated;
             HandInitiated {
                 Player = Player1
                 Card1 = player1Card1
@@ -125,13 +129,13 @@ let apply (cmd: Cmd) (history: Evt list) : Evt list =
             | Player1 -> beginGame.PickCard state.Player2.Deck
             | Player2 -> beginGame.PickCard state.Player1.Deck
             
-        [FirstPlayerChosen firstPlayer;
+        Result.Ok [FirstPlayerChosen firstPlayer;
             PlayerPickedACard {
                  Player = opponent
                  Card = cardPicked
             }]
         
-    | StartNewTurn -> [
+    | StartNewTurn -> Result.Ok [
         PlayerGotMana Player1;
         PlayerGotManaMax Player1;
         PlayerPickedACard {
@@ -139,7 +143,7 @@ let apply (cmd: Cmd) (history: Evt list) : Evt list =
             Card = 0
         }]
     
-    | EndTurn -> [PlayerActiveEndedTurn Player1]
+    | EndTurn -> Result.Ok [PlayerActiveEndedTurn Player1]
 
 let createCommandHandler : CommandHandler = {
     handle = apply

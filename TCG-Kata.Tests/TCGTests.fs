@@ -34,7 +34,7 @@ let ``First command CreateGame`` () =
         PickHand = fun () -> 2, 4, 5
     }
     let events = commandHandler.handle cmd []
-    test <@ events = [
+    test <@ events = Result.Ok [
         GameCreated;
         HandInitiated {
             Player = Player1
@@ -73,7 +73,7 @@ let ``Begin game when command BeginGame`` player1 player2 =
         }]
     
     let events = commandHandler.handle cmd history
-    test <@ events = [
+    test <@ events = Result.Ok [
         FirstPlayerChosen player1;
         PlayerPickedACard {
             Player = player2
@@ -91,7 +91,7 @@ let ``Begin Game with Player2 as First player`` () = ``Begin game when command B
 let ``Begining of the turn the active player get mana`` () =
     // TODO : Same avec le player 2
     let events = defaultCommandHandler.handle StartNewTurn eventsHistory
-    test <@ events = [
+    test <@ events = Result.Ok [
         PlayerGotMana Player1;
         PlayerGotManaMax Player1;
         PlayerPickedACard {
@@ -111,7 +111,7 @@ let ``The active player end it's turn``() =
             Card = 0
         }
     ])
-    test <@ event = [
+    test <@ event = Result.Ok [
         PlayerActiveEndedTurn Player1;
     ] @>
 
