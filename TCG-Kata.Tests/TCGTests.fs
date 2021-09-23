@@ -158,5 +158,15 @@ let ``Impossible to draw a card which is not in the deck`` () =
         Card2 = 1
         Card3 = 1
     }
-    test <@ true = false @>
+    
+    let history = [GameCreated; handInitiatedPlayer1; handInitiatedPlayer2]
+    let cmd = BeginGame { 
+        ChooseFirstPlayer = fun () -> PlayerChosen.Player2
+        PickCard = fun _ -> 8
+    }
+    let result = match defaultCommandHandler.handle cmd history with
+                 | Ok _ -> false
+                 | Error _ -> true
+    
+    test <@ result @>
     
