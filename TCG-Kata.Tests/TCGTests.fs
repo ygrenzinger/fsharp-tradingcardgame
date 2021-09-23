@@ -31,7 +31,7 @@ let defaultCommandHandler = createCommandHandler
 let ``First command CreateGame`` () =
     let commandHandler = createCommandHandler
     let cmd = CreateGame {
-        PickHand = fun () -> 2, 4, 5
+        PickedHand = 2, 4, 5
     }
     let events = commandHandler.handle cmd []
     test <@ events = Result.Ok [
@@ -53,8 +53,8 @@ let ``First command CreateGame`` () =
 let ``Begin game when command BeginGame`` player1 player2 =
     let commandHandler = createCommandHandler
     let cmd = BeginGame {
-        ChooseFirstPlayer = fun () -> player1
-        PickCard = fun _ -> 7
+        FirstPlayer = player1
+        PickedCard = 7
     }
     
     let history = [
@@ -161,8 +161,8 @@ let ``Impossible to draw a card which is not in the deck`` () =
     
     let history = [GameCreated; handInitiatedPlayer1; handInitiatedPlayer2]
     let cmd = BeginGame { 
-        ChooseFirstPlayer = fun () -> PlayerChosen.Player2
-        PickCard = fun deck -> 8
+        FirstPlayer = PlayerChosen.Player2
+        PickedCard = 8
     }
     let result = match defaultCommandHandler.handle cmd history with
                  | Ok _ -> false

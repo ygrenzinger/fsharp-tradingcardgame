@@ -18,12 +18,12 @@ type PlayerPickedACard = {
 }
 
 type CreateGame = {
-    PickHand: Unit -> Card * Card * Card
+    PickedHand: Card * Card * Card
 }
 
 type BeginGame = {
-    ChooseFirstPlayer: Unit -> PlayerChosen
-    PickCard: Card list -> Card
+    FirstPlayer: PlayerChosen
+    PickedCard: Card
 }
 
 type Cmd =
@@ -69,6 +69,8 @@ let pickCardFromDeck player card =
         Hand = player.Hand@[card]
         Deck = removeFirst player.Deck }
 
+let initialDeck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]
+
 let hydrate (events: Evt list) : Game =  
     
     let handleEvent state evt =
@@ -87,8 +89,8 @@ let hydrate (events: Evt list) : Game =
     
     let GameCreated::tail = events
     tail |> List.fold handleEvent {
-        Player1 = { Deck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = []; Mana = 0; Health = 30 }
-        Player2 = { Deck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = []; Mana = 0; Health = 30 }
+        Player1 = { Deck = initialDeck; Hand = []; Mana = 0; Health = 30 }
+        Player2 = { Deck = initialDeck; Hand = []; Mana = 0; Health = 30 }
         Current = None
     }
 
@@ -100,8 +102,8 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
     
     match cmd with
     | CreateGame create -> 
-        let player1Card1, player1Card2, player1Card3 = create.PickHand ()
-        let player2Card1, player2Card2, player2Card3 = create.PickHand ()
+        let player1Card1, player1Card2, player1Card3 = create.PickedHand
+        let player2Card1, player2Card2, player2Card3 = create.PickedHand
         
         Result.Ok [GameCreated;
             HandInitiated {
@@ -118,7 +120,7 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
             }]
         
     | BeginGame beginGame -> 
-        let firstPlayer = beginGame.ChooseFirstPlayer ()
+        let firstPlayer = beginGame.FirstPlayer
         let opponent = match firstPlayer with
                        | Player1 -> Player2
                        | Player2 -> Player1
@@ -129,7 +131,7 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
                    | Player1 -> state.Player2.Deck
                    | Player2 -> state.Player1.Deck
 
-        let card = beginGame.PickCard deck
+        let card = beginGame.PickedCard
         if deck |> List.contains card
         then Result.Ok [
                 FirstPlayerChosen firstPlayer;
