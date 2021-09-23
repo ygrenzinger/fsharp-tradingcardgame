@@ -124,16 +124,21 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
                        | Player2 -> Player1
         
         let state = hydrate history
-        let cardPicked =
-            match firstPlayer with
-            | Player1 -> beginGame.PickCard state.Player2.Deck
-            | Player2 -> beginGame.PickCard state.Player1.Deck
-            
-        Result.Ok [FirstPlayerChosen firstPlayer;
-            PlayerPickedACard {
-                 Player = opponent
-                 Card = cardPicked
-            }]
+        
+        let deck = match firstPlayer with
+                   | Player1 -> state.Player2.Deck
+                   | Player2 -> state.Player1.Deck
+
+        let card = beginGame.PickCard deck
+        if deck |> List.contains card
+        then Result.Ok [
+                FirstPlayerChosen firstPlayer;
+                PlayerPickedACard {
+                     Player = opponent
+                     Card = card
+                }
+            ]
+        else Result.Error { Message = "Noooo !!!!" }
         
     | StartNewTurn -> Result.Ok [
         PlayerGotMana Player1;
