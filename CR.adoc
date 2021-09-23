@@ -1,0 +1,11 @@
+= CR des sessions
+
+== 23/09/2021
+
+Discussion autour de la taille des aggregats: Jeu est il trop gros? On pourra en discuter en repartant de l'Event Storming, mais on veut allez au bout de l'implem actuel.
+On ajoute un test pour montrer qu'on ne peut pas tirer une carte déja tiré et on supprime l'injection de fun dans l'aggregat.
+
+Idée pour la prochaine fois:
+
+- Ajouter la partie infra qui gère le deck et la possibilité de tirer une cartre au hasard dans un paquet de carte?
+- ajouter l'évènement CardPicked pour garantir qu'on ne peut pas construire une game invalide.
