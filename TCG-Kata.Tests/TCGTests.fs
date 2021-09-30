@@ -4,11 +4,11 @@ open TCG
 open Xunit
 open Swensen.Unquote
 
-let eventsHistory = [
+let player1BeginHistory = [
         GameCreated;
         HandInitiated {
             Player = Player1
-            Card1 = 2
+            Card1 = 1
             Card2 = 4
             Card3 = 5
         };
@@ -51,12 +51,6 @@ let ``First command CreateGame`` () =
     ] @>
     
 let ``Begin game when command BeginGame`` player1 player2 =
-    let commandHandler = createCommandHandler
-    let cmd = BeginGame {
-        FirstPlayer = player1
-        PickedCard = 7
-    }
-    
     let history = [
         GameCreated;
         HandInitiated {
@@ -72,6 +66,12 @@ let ``Begin game when command BeginGame`` player1 player2 =
             Card3 = 5
         }]
     
+    let cmd = BeginGame {
+        FirstPlayer = player1
+        PickedCard = 7
+    }
+    
+    let commandHandler = createCommandHandler
     let events = commandHandler.handle cmd history
     test <@ events = Result.Ok [
         FirstPlayerChosen player1;
@@ -90,7 +90,7 @@ let ``Begin Game with Player2 as First player`` () = ``Begin game when command B
 [<Fact>]
 let ``Begining of the turn the active player get mana`` () =
     // TODO : Same avec le player 2
-    let events = defaultCommandHandler.handle StartNewTurn eventsHistory
+    let events = defaultCommandHandler.handle StartNewTurn player1BeginHistory
     test <@ events = Result.Ok [
         PlayerGotMana Player1;
         PlayerGotManaMax Player1;
@@ -103,7 +103,7 @@ let ``Begining of the turn the active player get mana`` () =
 [<Fact>]
 let ``The active player end it's turn``() =
     // TODO : Same avec le player 2
-    let event = defaultCommandHandler.handle EndTurn (eventsHistory @ [
+    let event = defaultCommandHandler.handle EndTurn (player1BeginHistory @ [
         PlayerGotMana Player1;
         PlayerGotManaMax Player1;
         PlayerPickedACard {
@@ -118,8 +118,8 @@ let ``The active player end it's turn``() =
 [<Fact>]
 let ``Create a game with initial state`` () =
     let game = hydrate [GameCreated]
-    test <@ game.Player1 = { Mana = 0; Health = 30; Deck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = [] } @>
-    test <@ game.Player2 = { Mana = 0; Health = 30; Deck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = [] } @>
+    test <@ game.Player1 = { Mana = 0; ManaMax = 0; Health = 30; Deck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = [] } @>
+    test <@ game.Player2 = { Mana = 0; ManaMax = 0; Health = 30; Deck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = [] } @>
 
 [<Fact>]
 let ``Choose first player as current player`` () =
@@ -141,8 +141,12 @@ let ``Player should pick cards from his deck for his initial hand`` () =
         Card3 = 1
     }
     let game = hydrate [GameCreated; handInitiatedPlayer1; handInitiatedPlayer2]
-    test <@ game.Player1 = { Mana = 0; Health = 30; Deck = [0;0;1;1;2;2;3;3;3;3;4;4;5;6;6;7;8]; Hand = [2;4;5] } @>
-    test <@ game.Player2 = { Mana = 0; Health = 30; Deck = [0;0;2;2;2;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = [3;1;1] } @>
+    test <@ game.Player1 = { Mana = 0; ManaMax = 0; Health = 30; Deck = [0;0;1;1;2;2;3;3;3;3;4;4;5;6;6;7;8]; Hand = [2;4;5] } @>
+    test <@ game.Player2 = { Mana = 0; ManaMax = 0; Health = 30; Deck = [0;0;2;2;2;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = [3;1;1] } @>
+    
+let isError = function
+    | Ok _ -> false
+    | Error _ -> true
     
 [<Fact>]
 let ``Impossible to draw a card which is not in the deck`` () =
@@ -164,9 +168,36 @@ let ``Impossible to draw a card which is not in the deck`` () =
         FirstPlayer = PlayerChosen.Player2
         PickedCard = 8
     }
-    let result = match defaultCommandHandler.handle cmd history with
-                 | Ok _ -> false
-                 | Error _ -> true
+    let result = defaultCommandHandler.handle cmd history
+    test <@ result |> isError @>
     
-    test <@ result @>
+[<Fact>]
+let ``Impossible to play a card when not enough mana`` () =
+    let history = player1BeginHistory@[
+            PlayerGotMana Player1;
+            PlayerGotManaMax Player1;
+            PlayerPickedACard {
+                Player = Player1
+                Card = 0
+            }
+        ]
     
+    let cmd = PlayCard 5
+    let result = createCommandHandler.handle cmd history
+    test <@ result |> isError @>
+     
+[<Fact>]
+let ``Possible to play a card when enough mana`` () =
+    let history = player1BeginHistory@[
+            PlayerGotMana Player1;
+            PlayerGotManaMax Player1;
+            PlayerPickedACard {
+                Player = Player1
+                Card = 0
+            }
+        ]
+    
+    let cmd = PlayCard 1
+    let result = createCommandHandler.handle cmd history
+    test <@ result = Result.Ok [PlayerPlayCard 1] @>
+     
