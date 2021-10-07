@@ -170,8 +170,10 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
         let currentPlayer = match state.Current with
                             | Some Player1 -> state.Player1
                             | _ -> failwith "t'as qu'à implémenter !!"
-        
-        if currentPlayer.Mana >= card
+
+        if currentPlayer.Hand |> List.contains card |> not
+        then Result.Error { Message = "Don't have the card"}
+        elif currentPlayer.Mana >= card
         then Result.Ok [PlayerPlayCard card]
         else Result.Error { Message = "Not enough mana" }
     
