@@ -199,7 +199,7 @@ let ``Possible to play a card when enough mana`` () =
     
     let cmd = PlayCard 1
     let result = createCommandHandler.handle cmd history
-    test <@ result = Result.Ok [PlayerPlayCard 1] @>
+    test <@ result = Result.Ok [PlayerPlayedCard 1] @>
 
 [<Fact>]
 let ``Impossible to play a card that is not in your hand``() =
@@ -213,5 +213,21 @@ let ``Impossible to play a card that is not in your hand``() =
     ]
 
     let cmd = PlayCard 0
+    let result = createCommandHandler.handle cmd history
+    test <@ result |> isError @>
+
+[<Fact>]
+let ``Impossible to play a card when we not enough mana anymore``() =
+    let history = player1BeginHistory@[
+        PlayerGotMana Player1;
+        PlayerGotManaMax Player1;
+        PlayerPickedACard {
+            Player = Player1
+            Card = 1
+        }
+        PlayerPlayedCard 1;
+    ]
+
+    let cmd = PlayCard 1
     let result = createCommandHandler.handle cmd history
     test <@ result |> isError @>

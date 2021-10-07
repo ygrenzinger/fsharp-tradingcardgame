@@ -41,7 +41,7 @@ type Evt =
     | PlayerGotMana of PlayerChosen
     | PlayerGotManaMax of PlayerChosen
     | PlayerActiveEndedTurn of PlayerChosen
-    | PlayerPlayCard of Card
+    | PlayerPlayedCard of Card
 
 type Player = {
     Deck : Card list
@@ -97,7 +97,12 @@ let hydrate (events: Evt list) : Game =
             match player with
             | Player1 -> { state with Player1 = { state.Player1 with Mana = state.Player1.ManaMax } }
             | Player2 -> { state with Player2 = { state.Player2 with Mana = state.Player2.ManaMax } }
-             
+
+        | PlayerPlayedCard card ->
+            match state.Current with
+            | Some Player1 -> { state with Player1 = { state.Player1 with Mana = state.Player1.Mana - card } }
+            | Some Player2 -> { state with Player2 = { state.Player2 with Mana = state.Player2.Mana - card } }
+
         | _ -> state
     
     let GameCreated::tail = events
@@ -174,7 +179,7 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
         if currentPlayer.Hand |> List.contains card |> not
         then Result.Error { Message = "Don't have the card"}
         elif currentPlayer.Mana >= card
-        then Result.Ok [PlayerPlayCard card]
+        then Result.Ok [PlayerPlayedCard card]
         else Result.Error { Message = "Not enough mana" }
     
     | EndTurn -> Result.Ok [PlayerActiveEndedTurn Player1]
