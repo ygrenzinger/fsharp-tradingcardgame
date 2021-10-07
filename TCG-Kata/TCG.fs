@@ -42,6 +42,7 @@ type Evt =
     | PlayerGotManaMax of PlayerChosen
     | PlayerActiveEndedTurn of PlayerChosen
     | PlayerPlayedCard of Card
+    | PlayerLostLife of PlayerChosen
 
 type Player = {
     Deck : Card list
@@ -179,7 +180,11 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
         if currentPlayer.Hand |> List.contains card |> not
         then Result.Error { Message = "Don't have the card"}
         elif currentPlayer.Mana >= card
-        then Result.Ok [PlayerPlayedCard card]
+        then 
+            let opponent = match state.Current with
+                        | Some Player1 -> Player2
+                        | _ -> failwith "t'as qu'à implémenter !!!"
+            Result.Ok [PlayerPlayedCard card; PlayerLostLife opponent]
         else Result.Error { Message = "Not enough mana" }
     
     | EndTurn -> Result.Ok [PlayerActiveEndedTurn Player1]
