@@ -102,7 +102,6 @@ let ``Begining of the turn the active player get mana`` () =
 
 [<Fact>]
 let ``The active player end it's turn``() =
-    // TODO : Same avec le player 2
     let event = defaultCommandHandler.handle EndTurn (player1BeginHistory @ [
         PlayerGotMana Player1;
         PlayerGotManaMax Player1;
@@ -112,7 +111,7 @@ let ``The active player end it's turn``() =
         }
     ])
     test <@ event = Result.Ok [
-        PlayerActiveEndedTurn Player1;
+        PlayerEndedTurn Player1;
     ] @>
 
 [<Fact>]
@@ -241,3 +240,25 @@ let ``Impossible to play a card when we have not enough mana anymore``() =
     let cmd = PlayCard 1
     let result = createCommandHandler.handle cmd history
     test <@ result |> isError @>
+
+
+
+[<Fact>]
+let ``The next player becomes active after previous player end its turn``() =
+    let event = defaultCommandHandler.handle StartNewTurn (player1BeginHistory @ [
+        PlayerGotMana Player1
+        PlayerGotManaMax Player1
+        PlayerPickedACard {
+            Player = Player1
+            Card = 0
+        }
+        PlayerEndedTurn Player1
+    ])
+    test <@ event = Result.Ok [
+        PlayerGotMana Player2;
+        PlayerGotManaMax Player2;
+        PlayerPickedACard {
+            Player = Player2
+            Card = 0
+        }
+    ] @>

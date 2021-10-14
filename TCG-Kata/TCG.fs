@@ -45,7 +45,7 @@ type Evt =
     | PlayerPickedACard of PlayerPickedACard
     | PlayerGotMana of PlayerChosen
     | PlayerGotManaMax of PlayerChosen
-    | PlayerActiveEndedTurn of PlayerChosen
+    | PlayerEndedTurn of PlayerChosen
     | PlayerPlayedCard of Card
     | PlayerHealthReduced of PlayerHealthReduced
 
@@ -108,6 +108,13 @@ let hydrate (events: Evt list) : Game =
             match state.Current with
             | Some Player1 -> { state with Player1 = { state.Player1 with Mana = state.Player1.Mana - card } }
             | Some Player2 -> { state with Player2 = { state.Player2 with Mana = state.Player2.Mana - card } }
+
+        | PlayerEndedTurn player ->
+            match player with
+            | Player1 -> { state with Current = Some Player2 }
+            | Player2 -> { state with Current = Some Player1 }
+                
+
 
         | _ -> state
     
@@ -172,11 +179,16 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
         let state = hydrate history
         state |> beginGame beginGameCmd
 
-    | StartNewTurn -> Result.Ok [
-                          PlayerGotMana Player1;
-                          PlayerGotManaMax Player1;
+    | StartNewTurn -> 
+        let state = hydrate history
+        let currentPlayer = match state.Current with
+                            | Some player -> player
+                            | _ -> Player1
+        Result.Ok [
+                          PlayerGotMana currentPlayer;
+                          PlayerGotManaMax currentPlayer;
                           PlayerPickedACard {
-                              Player = Player1
+                              Player = currentPlayer
                               Card = 0
                             }]
     
@@ -199,7 +211,7 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
             }]
         else Result.Error { Message = "Not enough mana" }
     
-    | EndTurn -> Result.Ok [PlayerActiveEndedTurn Player1]
+    | EndTurn -> Result.Ok [PlayerEndedTurn Player1]
 
 let createCommandHandler : CommandHandler = {
     handle = apply
