@@ -33,6 +33,11 @@ type Cmd =
     | PlayCard of Card
     | EndTurn
 
+type PlayerHealthReduced = { 
+    Player: PlayerChosen
+    HealthReduced: int
+}
+
 type Evt =
     | GameCreated
     | FirstPlayerChosen of PlayerChosen
@@ -42,7 +47,7 @@ type Evt =
     | PlayerGotManaMax of PlayerChosen
     | PlayerActiveEndedTurn of PlayerChosen
     | PlayerPlayedCard of Card
-    | PlayerLostLife of PlayerChosen
+    | PlayerHealthReduced of PlayerHealthReduced
 
 type Player = {
     Deck : Card list
@@ -188,7 +193,10 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
             let opponent = match state.Current with
                         | Some Player1 -> Player2
                         | _ -> failwith "t'as qu'à implémenter !!!"
-            Result.Ok [PlayerPlayedCard card; PlayerLostLife opponent]
+            Result.Ok [PlayerPlayedCard card; PlayerHealthReduced  {
+                Player = opponent
+                HealthReduced = card
+            }]
         else Result.Error { Message = "Not enough mana" }
     
     | EndTurn -> Result.Ok [PlayerActiveEndedTurn Player1]
