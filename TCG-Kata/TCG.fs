@@ -106,9 +106,10 @@ let hydrate (events: Evt list) : Game =
 
         | _ -> state
     
-    let tail = match events with
-        | [] -> failwith "events should not be empty"
-        | GameCreated::tail -> tail
+    let tail = 
+        match events with
+            | GameCreated::tail -> tail
+            | _ -> failwith "events should not be empty and should start with GameCreated events"
 
     tail |> List.fold handleEvent {
         Player1 = { Deck = initialDeck; Hand = []; Mana = 0; ManaMax = 0; Health = 30 }
