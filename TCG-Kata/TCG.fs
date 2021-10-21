@@ -7,6 +7,8 @@ type PlayerChosen = Player1 | Player2
 
 
 type CreateGame = {
+    DeckPlayer1 : Card list
+    DeckPlayer2 : Card list
     PickedHand: Card * Card * Card // Random
 }
 
@@ -90,6 +92,12 @@ let hydrate (events: Evt list) : Game =
     
     let handleEvent state evt =
         match evt with
+        | GameCreated gameCreated ->
+            { state with
+                Player1 = { state.Player1 with Deck = gameCreated.DeckPlayer1 }
+                Player2 = { state.Player2 with Deck = gameCreated.DeckPlayer1 }
+            }
+            
         | FirstPlayerChosen player -> { state with Current = Some player }
         | HandInitiated handInitiated ->
             let pickCards player =
@@ -120,18 +128,11 @@ let hydrate (events: Evt list) : Game =
             | Player1 -> { state with Current = Some Player2 }
             | Player2 -> { state with Current = Some Player1 }
                 
-
-
         | _ -> state
-    
-    let tail = 
-        match events with
-        | GameCreated _::tail -> tail
-        | _ -> failwith "events should not be empty and should start with GameCreated events"
-
-    tail |> List.fold handleEvent {
-        Player1 = { Deck = initialDeck; Hand = []; Mana = 0; ManaMax = 0; Health = 30 }
-        Player2 = { Deck = initialDeck; Hand = []; Mana = 0; ManaMax = 0; Health = 30 }
+   
+    events |> List.fold handleEvent {
+        Player1 = { Deck = []; Hand = []; Mana = 0; ManaMax = 0; Health = 30 }
+        Player2 = { Deck = []; Hand = []; Mana = 0; ManaMax = 0; Health = 30 }
         Current = None
     }
 
@@ -168,8 +169,8 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
         let player2Card1, player2Card2, player2Card3 = create.PickedHand
         
         Result.Ok [GameCreated {
-                        DeckPlayer1 = initialDeck
-                        DeckPlayer2 = initialDeck
+                        DeckPlayer1 = create.DeckPlayer1
+                        DeckPlayer2 = create.DeckPlayer2
                     };
                    HandInitiated {
                        Player = Player1
