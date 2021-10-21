@@ -6,8 +6,8 @@ open Swensen.Unquote
 
 let player1BeginHistory = [
         GameCreated {
-            DeckPlayer1 = initialDeck
-            DeckPlayer2 = initialDeck
+            DeckPlayer1 = [1;4;5;1]
+            DeckPlayer2 = [2;4;5;7]
         }
         HandInitiated {
             Player = Player1
@@ -25,6 +25,30 @@ let player1BeginHistory = [
         PlayerPickedACard {
             Player = Player2
             Card = 7
+        };
+    ]
+
+let beginHistory deckPlayer1 deckPlayer2 = [
+        GameCreated {
+            DeckPlayer1 = deckPlayer1
+            DeckPlayer2 = deckPlayer2
+        }
+        HandInitiated {
+            Player = Player1
+            Card1 = deckPlayer1.[0]
+            Card2 = deckPlayer1.[1]
+            Card3 = deckPlayer1.[2]
+        }
+        HandInitiated {
+            Player = Player2
+            Card1 = deckPlayer2.[0]
+            Card2 = deckPlayer2.[1]
+            Card3 = deckPlayer2.[2]
+        }
+        FirstPlayerChosen Player1;
+        PlayerPickedACard {
+            Player = Player2
+            Card = deckPlayer2.[3]
         };
     ]
 
@@ -100,7 +124,8 @@ let ``Begin Game with Player2 as First player`` () = ``Begin game when command B
 [<Fact>]
 let ``Begining of the turn the active player get mana`` () =
     // TODO : Same avec le player 2
-    let events = defaultCommandHandler.handle StartNewTurn player1BeginHistory
+    let beginHistory = beginHistory [0;1;2;0] [0;1;2;3]
+    let events = defaultCommandHandler.handle StartNewTurn beginHistory
     test <@ events = Result.Ok [
         PlayerGotMana Player1;
         PlayerGotManaMax Player1;
@@ -112,7 +137,8 @@ let ``Begining of the turn the active player get mana`` () =
 
 [<Fact>]
 let ``The active player end it's turn``() =
-    let event = defaultCommandHandler.handle EndTurn (player1BeginHistory @ [
+    let beginHistory = beginHistory [0;1;2;0] [0;1;2;3]
+    let event = defaultCommandHandler.handle EndTurn (beginHistory @ [
         PlayerGotMana Player1;
         PlayerGotManaMax Player1;
         PlayerPickedACard {
@@ -168,7 +194,8 @@ let isError = function
     
 [<Fact>]
 let ``Impossible to play a card when not enough mana`` () =
-    let history = player1BeginHistory@[
+    let beginHistory = beginHistory [0;1;5;0] [0;1;2;3]
+    let history = beginHistory@[
             PlayerGotMana Player1;
             PlayerGotManaMax Player1;
             PlayerPickedACard {
@@ -183,7 +210,8 @@ let ``Impossible to play a card when not enough mana`` () =
      
 [<Fact>]
 let ``Possible to play a card when enough mana`` () =
-    let history = player1BeginHistory@[
+    let beginHistory = beginHistory [0;1;5;0] [0;1;2;3]
+    let history = beginHistory@[
             PlayerGotMana Player1;
             PlayerGotManaMax Player1;
             PlayerPickedACard {
@@ -204,7 +232,8 @@ let ``Possible to play a card when enough mana`` () =
 
 [<Fact>]
 let ``Impossible to play a card that is not in your hand``() =
-    let history = player1BeginHistory@[
+    let beginHistory = beginHistory [1;1;5;6] [0;1;2;3]
+    let history = beginHistory@[
         PlayerGotMana Player1;
         PlayerGotManaMax Player1;
         PlayerPickedACard {
@@ -219,7 +248,8 @@ let ``Impossible to play a card that is not in your hand``() =
 
 [<Fact>]
 let ``Impossible to play a card when we have not enough mana anymore``() =
-    let history = player1BeginHistory@[
+    let beginHistory = beginHistory [0;1;1;0] [0;1;2;3]
+    let history = beginHistory@[
         PlayerGotMana Player1;
         PlayerGotManaMax Player1;
         PlayerPickedACard {
@@ -237,11 +267,10 @@ let ``Impossible to play a card when we have not enough mana anymore``() =
     let result = createCommandHandler.handle cmd history
     test <@ result |> isError @>
 
-
-
 [<Fact>]
 let ``The next player becomes active after previous player end its turn``() =
-    let event = defaultCommandHandler.handle StartNewTurn (player1BeginHistory @ [
+    let beginHistory = beginHistory [0;1;5;0] [0;1;2;3;2]
+    let event = defaultCommandHandler.handle StartNewTurn (beginHistory @ [
         PlayerGotMana Player1
         PlayerGotManaMax Player1
         PlayerPickedACard {
@@ -255,6 +284,6 @@ let ``The next player becomes active after previous player end its turn``() =
         PlayerGotManaMax Player2;
         PlayerPickedACard {
             Player = Player2
-            Card = 0
+            Card = 2
         }
     ] @>

@@ -18,7 +18,7 @@ type BeginGame = {
 type Cmd =
     | CreateGame of CreateGame
     | BeginGame of BeginGame
-    | StartNewTurn // hidden picked card (random)
+    | StartNewTurn
     | PlayCard of Card
     | EndTurn
 
@@ -93,7 +93,7 @@ let hydrate (events: Evt list) : Game =
         | GameCreated gameCreated ->
             { state with
                 Player1 = { state.Player1 with Deck = gameCreated.DeckPlayer1 }
-                Player2 = { state.Player2 with Deck = gameCreated.DeckPlayer1 }
+                Player2 = { state.Player2 with Deck = gameCreated.DeckPlayer2 }
             }
             
         | FirstPlayerChosen player -> { state with Current = Some player }
@@ -105,6 +105,11 @@ let hydrate (events: Evt list) : Game =
             match handInitiated.Player with
             | Player1 -> { state with Player1 = pickCards state.Player1 }
             | Player2 -> { state with Player2 = pickCards state.Player2 }
+            
+        | PlayerPickedACard pickedACard ->
+            match pickedACard.Player with
+            | Player1 -> { state with Player1 = { state.Player1 with Deck = state.Player1.Deck |> List.skip 1 } }
+            | Player2 -> { state with Player2 = { state.Player2 with Deck = state.Player2.Deck |> List.skip 1 } }
             
         | PlayerGotMana player ->
             match player with
@@ -190,11 +195,16 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
         let currentPlayer = match state.Current with
                             | Some player -> player
                             | _ -> Player1
+        
+        let deck = match currentPlayer with
+                    | Player1 -> state.Player1.Deck
+                    | Player2 -> state.Player2.Deck
+                            
         Result.Ok [PlayerGotMana currentPlayer;
                       PlayerGotManaMax currentPlayer;
                       PlayerPickedACard {
                           Player = currentPlayer
-                          Card = 0
+                          Card = deck.[0]
                         }]
     
     | PlayCard card ->
