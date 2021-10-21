@@ -34,15 +34,14 @@ let defaultCommandHandler = createCommandHandler
 let ``First command CreateGame`` () =
     let commandHandler = createCommandHandler
     let cmd = CreateGame {
-        DeckPlayer1 = initialDeck
-        DeckPlayer2 = initialDeck
-        PickedHand = 2, 4, 5
+        DeckPlayer1 = [2; 4; 5]
+        DeckPlayer2 = [2; 4; 5]
     }
     let events = commandHandler.handle cmd []
     test <@ events = Result.Ok [
         GameCreated {
-            DeckPlayer1 = initialDeck
-            DeckPlayer2 = initialDeck
+            DeckPlayer1 = [2; 4; 5]
+            DeckPlayer2 = [2; 4; 5]
         }
         HandInitiated {
             Player = Player1

@@ -23,3 +23,5 @@ Est-il possible de merge StartNewTurn et EndTurn ? Quid de StartNewTurn si c'est
 
 Règles pas encore implémentées : 
 - perte de vie du joueur adverse quand on joue une carte qui provoque la fin de partie quand l'adversaire n'a plus de vie
+
+- vérifier que le deck est complet (20 cartes) au démarrage (cf: CreateGame)

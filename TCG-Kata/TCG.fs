@@ -9,7 +9,6 @@ type PlayerChosen = Player1 | Player2
 type CreateGame = {
     DeckPlayer1 : Card list
     DeckPlayer2 : Card list
-    PickedHand: Card * Card * Card // Random
 }
 
 type BeginGame = {
@@ -165,8 +164,8 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
     
     match cmd with
     | CreateGame create -> 
-        let player1Card1, player1Card2, player1Card3 = create.PickedHand
-        let player2Card1, player2Card2, player2Card3 = create.PickedHand
+        let player1Card1::player1Card2::player1Card3::_ = create.DeckPlayer1
+        let player2Card1::player2Card2::player2Card3::_ = create.DeckPlayer2
         
         Result.Ok [GameCreated {
                         DeckPlayer1 = create.DeckPlayer1
