@@ -58,10 +58,11 @@ let ``First command CreateGame`` () =
     ] @>
     
 let ``Begin game when command BeginGame`` player1 player2 =
+    let deck = [2;4;5;7]
     let history = [
         GameCreated {
-            DeckPlayer1 = initialDeck
-            DeckPlayer2 = initialDeck
+            DeckPlayer1 = deck
+            DeckPlayer2 = deck
         }
         HandInitiated {
             Player = Player1
@@ -78,7 +79,6 @@ let ``Begin game when command BeginGame`` player1 player2 =
     
     let cmd = BeginGame {
         FirstPlayer = player1
-        PickedCard = 7
     }
     
     let commandHandler = createCommandHandler
@@ -165,32 +165,6 @@ let ``Player should pick cards from his deck for his initial hand`` () =
 let isError = function
     | Ok _ -> false
     | Error _ -> true
-    
-[<Fact>]
-let ``Impossible to draw a card which is not in the deck`` () =
-    let handInitiatedPlayer1 = HandInitiated {
-        Player = Player1
-        Card1 = 6
-        Card2 = 7
-        Card3 = 8
-    }
-    let handInitiatedPlayer2 = HandInitiated {
-        Player = Player2
-        Card1 = 3
-        Card2 = 1
-        Card3 = 1
-    }
-    
-    let history = [GameCreated {
-            DeckPlayer1 = initialDeck
-            DeckPlayer2 = initialDeck
-        }; handInitiatedPlayer1; handInitiatedPlayer2]
-    let cmd = BeginGame { 
-        FirstPlayer = PlayerChosen.Player2
-        PickedCard = 8
-    }
-    let result = defaultCommandHandler.handle cmd history
-    test <@ result |> isError @>
     
 [<Fact>]
 let ``Impossible to play a card when not enough mana`` () =

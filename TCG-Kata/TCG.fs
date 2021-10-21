@@ -13,7 +13,6 @@ type CreateGame = {
 
 type BeginGame = {
     FirstPlayer: PlayerChosen // Random
-    PickedCard: Card // Random
 }
 
 type Cmd =
@@ -149,16 +148,14 @@ let private beginGame (cmd: BeginGame) (state: Game) =
                | Player1 -> state.Player2.Deck
                | Player2 -> state.Player1.Deck
 
-    let card = cmd.PickedCard
-    if deck |> List.contains card
-    then Result.Ok [
-             FirstPlayerChosen firstPlayer;
-             PlayerPickedACard {
-                 Player = opponent
-                 Card = card
-                 }
-             ]
-    else Result.Error { Message = "Noooo !!!!" }
+    let card::_ = deck
+    Result.Ok [
+         FirstPlayerChosen firstPlayer;
+         PlayerPickedACard {
+             Player = opponent
+             Card = card
+             }
+         ]
 
 let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
     
