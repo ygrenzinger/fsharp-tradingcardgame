@@ -5,19 +5,22 @@ open Xunit
 open Swensen.Unquote
 
 let player1BeginHistory = [
-        GameCreated;
+        GameCreated {
+            DeckPlayer1 = initialDeck
+            DeckPlayer2 = initialDeck
+        }
         HandInitiated {
             Player = Player1
             Card1 = 1
             Card2 = 4
             Card3 = 5
-        };
+        }
         HandInitiated {
             Player = Player2
             Card1 = 2
             Card2 = 4
             Card3 = 5
-        };
+        }
         FirstPlayerChosen Player1;
         PlayerPickedACard {
             Player = Player2
@@ -35,13 +38,16 @@ let ``First command CreateGame`` () =
     }
     let events = commandHandler.handle cmd []
     test <@ events = Result.Ok [
-        GameCreated;
+        GameCreated {
+            DeckPlayer1 = initialDeck
+            DeckPlayer2 = initialDeck
+        }
         HandInitiated {
             Player = Player1
             Card1 = 2
             Card2 = 4
             Card3 = 5
-        };
+        }
         HandInitiated {
             Player = Player2
             Card1 = 2
@@ -52,13 +58,16 @@ let ``First command CreateGame`` () =
     
 let ``Begin game when command BeginGame`` player1 player2 =
     let history = [
-        GameCreated;
+        GameCreated {
+            DeckPlayer1 = initialDeck
+            DeckPlayer2 = initialDeck
+        }
         HandInitiated {
             Player = Player1
             Card1 = 2
             Card2 = 4
             Card3 = 5
-        };
+        }
         HandInitiated {
             Player = Player2
             Card1 = 2
@@ -116,13 +125,19 @@ let ``The active player end it's turn``() =
 
 [<Fact>]
 let ``Create a game with initial state`` () =
-    let game = hydrate [GameCreated]
+    let game = hydrate [GameCreated {
+            DeckPlayer1 = initialDeck
+            DeckPlayer2 = initialDeck
+        }]
     test <@ game.Player1 = { Mana = 0; ManaMax = 0; Health = 30; Deck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = [] } @>
     test <@ game.Player2 = { Mana = 0; ManaMax = 0; Health = 30; Deck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = [] } @>
 
 [<Fact>]
 let ``Choose first player as current player`` () =
-    let game = hydrate [GameCreated; FirstPlayerChosen Player1]
+    let game = hydrate [GameCreated {
+            DeckPlayer1 = initialDeck
+            DeckPlayer2 = initialDeck
+        }; FirstPlayerChosen Player1]
     test <@ game.Current = Some Player1 @>
     
 [<Fact>]
@@ -139,7 +154,10 @@ let ``Player should pick cards from his deck for his initial hand`` () =
         Card2 = 1
         Card3 = 1
     }
-    let game = hydrate [GameCreated; handInitiatedPlayer1; handInitiatedPlayer2]
+    let game = hydrate [GameCreated {
+            DeckPlayer1 = initialDeck
+            DeckPlayer2 = initialDeck
+        }; handInitiatedPlayer1; handInitiatedPlayer2]
     test <@ game.Player1 = { Mana = 0; ManaMax = 0; Health = 30; Deck = [0;0;1;1;2;2;3;3;3;3;4;4;5;6;6;7;8]; Hand = [2;4;5] } @>
     test <@ game.Player2 = { Mana = 0; ManaMax = 0; Health = 30; Deck = [0;0;2;2;2;3;3;3;4;4;4;5;5;6;6;7;8]; Hand = [3;1;1] } @>
     
@@ -162,7 +180,10 @@ let ``Impossible to draw a card which is not in the deck`` () =
         Card3 = 1
     }
     
-    let history = [GameCreated; handInitiatedPlayer1; handInitiatedPlayer2]
+    let history = [GameCreated {
+            DeckPlayer1 = initialDeck
+            DeckPlayer2 = initialDeck
+        }; handInitiatedPlayer1; handInitiatedPlayer2]
     let cmd = BeginGame { 
         FirstPlayer = PlayerChosen.Player2
         PickedCard = 8

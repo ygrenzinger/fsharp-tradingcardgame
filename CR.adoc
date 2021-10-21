@@ -17,3 +17,9 @@ Il manque l'ajout de la carte prise lors du StartNewTurn
 Est-il possible de merge StartNewTurn et EndTurn ? Quid de StartNewTurn si c'est utilisé une seule fois
 
 * Ajouter la partie infra qui gère le deck et la possibilité de tirer une cartre au hasard dans un paquet de carte? *
+
+
+== 21/10/2021
+
+Règles pas encore implémentées : 
+- perte de vie du joueur adverse quand on joue une carte qui provoque la fin de partie quand l'adversaire n'a plus de vie

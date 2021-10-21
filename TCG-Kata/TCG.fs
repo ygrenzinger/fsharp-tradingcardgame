@@ -5,6 +5,33 @@ module TCG
 type Card = int
 type PlayerChosen = Player1 | Player2
 
+
+type CreateGame = {
+    PickedHand: Card * Card * Card // Random
+}
+
+type BeginGame = {
+    FirstPlayer: PlayerChosen // Random
+    PickedCard: Card // Random
+}
+
+type Cmd =
+    | CreateGame of CreateGame
+    | BeginGame of BeginGame
+    | StartNewTurn // hidden picked card (random)
+    | PlayCard of Card
+    | EndTurn
+
+type PlayerPickedACard = {
+    Player : PlayerChosen
+    Card : Card
+}
+
+type PlayerHealthReduced = { 
+    Player: PlayerChosen
+    HealthReduced: int
+}
+
 type HandInitiated = {
     Player : PlayerChosen
     Card1 : Card
@@ -12,34 +39,13 @@ type HandInitiated = {
     Card3 : Card
 }
 
-type PlayerPickedACard = {
-    Player : PlayerChosen
-    Card : Card
-}
-
-type CreateGame = {
-    PickedHand: Card * Card * Card
-}
-
-type BeginGame = {
-    FirstPlayer: PlayerChosen
-    PickedCard: Card
-}
-
-type Cmd =
-    | CreateGame of CreateGame
-    | BeginGame of BeginGame
-    | StartNewTurn
-    | PlayCard of Card
-    | EndTurn
-
-type PlayerHealthReduced = { 
-    Player: PlayerChosen
-    HealthReduced: int
+type GameCreated = {
+    DeckPlayer1 : Card list
+    DeckPlayer2 : Card list
 }
 
 type Evt =
-    | GameCreated
+    | GameCreated of GameCreated
     | FirstPlayerChosen of PlayerChosen
     | HandInitiated of HandInitiated
     | PlayerPickedACard of PlayerPickedACard
@@ -120,8 +126,8 @@ let hydrate (events: Evt list) : Game =
     
     let tail = 
         match events with
-            | GameCreated::tail -> tail
-            | _ -> failwith "events should not be empty and should start with GameCreated events"
+        | GameCreated _::tail -> tail
+        | _ -> failwith "events should not be empty and should start with GameCreated events"
 
     tail |> List.fold handleEvent {
         Player1 = { Deck = initialDeck; Hand = []; Mana = 0; ManaMax = 0; Health = 30 }
@@ -161,7 +167,10 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
         let player1Card1, player1Card2, player1Card3 = create.PickedHand
         let player2Card1, player2Card2, player2Card3 = create.PickedHand
         
-        Result.Ok [GameCreated;
+        Result.Ok [GameCreated {
+                        DeckPlayer1 = initialDeck
+                        DeckPlayer2 = initialDeck
+                    };
                    HandInitiated {
                        Player = Player1
                        Card1 = player1Card1
@@ -184,13 +193,12 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
         let currentPlayer = match state.Current with
                             | Some player -> player
                             | _ -> Player1
-        Result.Ok [
-                          PlayerGotMana currentPlayer;
-                          PlayerGotManaMax currentPlayer;
-                          PlayerPickedACard {
-                              Player = currentPlayer
-                              Card = 0
-                            }]
+        Result.Ok [PlayerGotMana currentPlayer;
+                      PlayerGotManaMax currentPlayer;
+                      PlayerPickedACard {
+                          Player = currentPlayer
+                          Card = 0
+                        }]
     
     | PlayCard card ->
         let state = hydrate history
@@ -203,8 +211,8 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
         elif currentPlayer.Mana >= card
         then 
             let opponent = match state.Current with
-                        | Some Player1 -> Player2
-                        | _ -> failwith "t'as qu'à implémenter !!!"
+                            | Some Player1 -> Player2
+                            | _ -> failwith "t'as qu'à implémenter !!!"
             Result.Ok [PlayerPlayedCard card; PlayerHealthReduced  {
                 Player = opponent
                 HealthReduced = card
