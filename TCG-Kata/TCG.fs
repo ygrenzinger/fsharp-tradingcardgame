@@ -235,20 +235,17 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
                            | _ -> failwith "t'as qu'à implémenter !!!"
                        
             let opponentState = getPlayerState opponent
-            if opponentState.Health > card
-            then Result.Ok [
-                PlayerPlayedCard card
-                PlayerHealthReduced {
-                    Player = opponent
-                    HealthReduced = card
-                }]
-            else Result.Ok [
-                PlayerPlayedCard card
-                PlayerHealthReduced {
+            
+            Result.Ok [
+                yield PlayerPlayedCard card 
+                yield PlayerHealthReduced {
                     Player = opponent
                     HealthReduced = card
                 }
-                PlayerWon currentPlayer]
+                if opponentState.Health <= card then
+                    yield PlayerWon currentPlayer
+            ]
+                
         else Result.Error { Message = "Not enough mana" }
 
     | EndTurn -> Result.Ok [PlayerEndedTurn Player1]

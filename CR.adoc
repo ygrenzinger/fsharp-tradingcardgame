@@ -21,9 +21,19 @@ Est-il possible de merge StartNewTurn et EndTurn ? Quid de StartNewTurn si c'est
 
 == 21/10/2021
 
-Règles pas encore implémentées : 
+Refactor du code: 
+- le deck est randomisé à l'initialisation du jeu
+- suppression des valeurs "random" injectées dans les commandes 
+
+
+== 28/10/2021
+
+DONE :
 - perte de vie du joueur adverse quand on joue une carte qui provoque la fin de partie quand l'adversaire n'a plus de vie
 
+== TODO : 
+- Refactor du code d'exécution des commandes
+- Refactor des tests : factory methods pour créer de l'historique pour les commandes  
 - vérifier que le deck est complet (20 cartes) au démarrage (cf: CreateGame)
 - vérifier qu'on ne peut plus piocher de carte si le deck est vide (écrire un test)
     -> aussi règle du "bleeding out"
