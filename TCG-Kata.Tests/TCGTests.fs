@@ -287,3 +287,29 @@ let ``The next player becomes active after previous player end its turn``() =
             Card = 2
         }
     ] @>
+
+[<Fact>]
+let ``The game ends when a player loose all its health`` () =
+    let beginHistory = beginHistory [0;1;5;0] [0;1;2;3;2]
+    let history =
+        beginHistory@[
+            PlayerGotMana Player1
+            PlayerGotManaMax Player1
+            PlayerPickedACard {
+                Player = Player1
+                Card = 0
+            }
+            PlayerHealthReduced {
+                 Player = Player.Player2
+                 HealthReduced = 29
+             }]
+        
+    let cmd = PlayCard 1
+    let result = createCommandHandler.handle cmd history
+    test <@ result = Ok [
+            PlayerPlayedCard 1
+            PlayerHealthReduced {
+                 Player = Player.Player2
+                 HealthReduced = 1
+            }
+            PlayerWon Player.Player1 ] @>

@@ -3,7 +3,7 @@ module TCG
 // https://github.com/bkimminich/kata-tcg
 
 type Card = int
-type PlayerChosen = Player1 | Player2
+type Player = Player1 | Player2
 
 
 type CreateGame = {
@@ -12,7 +12,7 @@ type CreateGame = {
 }
 
 type BeginGame = {
-    FirstPlayer: PlayerChosen // Random
+    FirstPlayer: Player // Random
 }
 
 type Cmd =
@@ -23,17 +23,17 @@ type Cmd =
     | EndTurn
 
 type PlayerPickedACard = {
-    Player : PlayerChosen
+    Player : Player
     Card : Card
 }
 
 type PlayerHealthReduced = { 
-    Player: PlayerChosen
+    Player: Player
     HealthReduced: int
 }
 
 type HandInitiated = {
-    Player : PlayerChosen
+    Player : Player
     Card1 : Card
     Card2 : Card
     Card3 : Card
@@ -46,16 +46,17 @@ type GameCreated = {
 
 type Evt =
     | GameCreated of GameCreated
-    | FirstPlayerChosen of PlayerChosen
+    | FirstPlayerChosen of Player
     | HandInitiated of HandInitiated
     | PlayerPickedACard of PlayerPickedACard
-    | PlayerGotMana of PlayerChosen
-    | PlayerGotManaMax of PlayerChosen
-    | PlayerEndedTurn of PlayerChosen
+    | PlayerGotMana of Player
+    | PlayerGotManaMax of Player
+    | PlayerEndedTurn of Player
     | PlayerPlayedCard of Card
     | PlayerHealthReduced of PlayerHealthReduced
+    | PlayerWon of Player
 
-type Player = {
+type PlayerState = {
     Deck : Card list
     Hand : Card list
     Mana : int
@@ -63,10 +64,10 @@ type Player = {
     Health : int
 }
 
-type Game =  {
-    Player1 : Player
-    Player2 : Player
-    Current : PlayerChosen option
+type GameState =  {
+    Player1 : PlayerState
+    Player2 : PlayerState
+    Current : Player option
 }
 
 type Error = {
@@ -86,7 +87,7 @@ let pickCardFromDeck player card =
 
 let initialDeck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]
 
-let hydrate (events: Evt list) : Game =  
+let hydrate (events: Evt list) : GameState =  
     
     let handleEvent state evt =
         match evt with
@@ -97,6 +98,7 @@ let hydrate (events: Evt list) : Game =
             }
             
         | FirstPlayerChosen player -> { state with Current = Some player }
+        
         | HandInitiated handInitiated ->
             let pickCards player =
                 [handInitiated.Card1; handInitiated.Card2; handInitiated.Card3]
@@ -131,6 +133,11 @@ let hydrate (events: Evt list) : Game =
             | Player1 -> { state with Current = Some Player2 }
             | Player2 -> { state with Current = Some Player1 }
                 
+        | PlayerHealthReduced { Player = player; HealthReduced = healthReduced } ->
+            match player with
+            | Player1 -> { state with Player1 = { state.Player1 with Health = state.Player1.Health - healthReduced } }
+            | Player2 -> { state with Player2 = { state.Player2 with Health = state.Player2.Health - healthReduced } }
+                
         | _ -> state
    
     events |> List.fold handleEvent {
@@ -143,7 +150,7 @@ type CommandHandler = {
     handle : Cmd -> Evt list -> Result<Evt list, Error>
 }
 
-let private beginGame (cmd: BeginGame) (state: Game) =
+let private beginGame (cmd: BeginGame) (state: GameState) =
     let firstPlayer = cmd.FirstPlayer
     let opponent = match firstPlayer with
                    | Player1 -> Player2
@@ -206,26 +213,44 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
                           Player = currentPlayer
                           Card = deck.[0]
                         }]
-    
+
     | PlayCard card ->
         let state = hydrate history
+        
+        let getPlayerState = function
+            | Player1 -> state.Player1
+            | Player2 -> state.Player2
+        
         let currentPlayer = match state.Current with
-                            | Some Player1 -> state.Player1
-                            | _ -> failwith "t'as qu'à implémenter !!"
-
-        if currentPlayer.Hand |> List.contains card |> not
+                            | Some player -> player
+                            | _ -> Player1
+        let currentPlayerState = getPlayerState currentPlayer
+                            
+        if currentPlayerState.Hand |> List.contains card |> not
         then Result.Error { Message = "Don't have the card"}
-        elif currentPlayer.Mana >= card
+        elif currentPlayerState.Mana >= card
         then 
             let opponent = match state.Current with
-                            | Some Player1 -> Player2
-                            | _ -> failwith "t'as qu'à implémenter !!!"
-            Result.Ok [PlayerPlayedCard card; PlayerHealthReduced  {
-                Player = opponent
-                HealthReduced = card
-            }]
+                           | Some Player1 -> Player2
+                           | _ -> failwith "t'as qu'à implémenter !!!"
+                       
+            let opponentState = getPlayerState opponent
+            if opponentState.Health > card
+            then Result.Ok [
+                PlayerPlayedCard card
+                PlayerHealthReduced {
+                    Player = opponent
+                    HealthReduced = card
+                }]
+            else Result.Ok [
+                PlayerPlayedCard card
+                PlayerHealthReduced {
+                    Player = opponent
+                    HealthReduced = card
+                }
+                PlayerWon currentPlayer]
         else Result.Error { Message = "Not enough mana" }
-    
+
     | EndTurn -> Result.Ok [PlayerEndedTurn Player1]
 
 let createCommandHandler : CommandHandler = {
