@@ -64,11 +64,20 @@ type PlayerState = {
     Health : int
 }
 
-type GameState =  {
+type GameState = {
     Player1 : PlayerState
     Player2 : PlayerState
     Current : Player option
-}
+} with 
+    member this.CurrentPlayer =
+        match this.Current with
+        | Some player -> player
+        | _ -> Player1
+    member this.OpponentPlayer = 
+        match this.Current with
+        | Some Player1 -> Player2
+        | Some Player2 -> Player1
+        | _ -> Player1
 
 type Error = {
     Message: string
@@ -199,9 +208,7 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
 
     | StartNewTurn -> 
         let state = hydrate history
-        let currentPlayer = match state.Current with
-                            | Some player -> player
-                            | _ -> Player1
+        let currentPlayer = state.CurrentPlayer
         
         let deck = match currentPlayer with
                     | Player1 -> state.Player1.Deck
@@ -221,19 +228,14 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
             | Player1 -> state.Player1
             | Player2 -> state.Player2
         
-        let currentPlayer = match state.Current with
-                            | Some player -> player
-                            | _ -> Player1
+        let currentPlayer = state.CurrentPlayer
         let currentPlayerState = getPlayerState currentPlayer
                             
         if currentPlayerState.Hand |> List.contains card |> not
         then Result.Error { Message = "Don't have the card"}
         elif currentPlayerState.Mana >= card
         then 
-            let opponent = match state.Current with
-                           | Some Player1 -> Player2
-                           | _ -> failwith "t'as qu'à implémenter !!!"
-                       
+            let opponent = state.OpponentPlayer
             let opponentState = getPlayerState opponent
             
             Result.Ok [

@@ -38,3 +38,4 @@ DONE :
 - vérifier qu'on ne peut plus piocher de carte si le deck est vide (écrire un test)
     -> aussi règle du "bleeding out"
 - vérifier qu'on ajoute à la main la carte que l'on retire du deck
+- vérifier que l'on ne peut pas dépasser le max mana de 10
