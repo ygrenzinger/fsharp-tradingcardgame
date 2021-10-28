@@ -30,6 +30,7 @@ Refactor du code:
 
 DONE :
 - perte de vie du joueur adverse quand on joue une carte qui provoque la fin de partie quand l'adversaire n'a plus de vie
+- refactor code des commandes & ajout de méthodes d'extensions sur GameState  
 
 == TODO : 
 - Refactor du code d'exécution des commandes
@@ -39,3 +40,5 @@ DONE :
     -> aussi règle du "bleeding out"
 - vérifier qu'on ajoute à la main la carte que l'on retire du deck
 - vérifier que l'on ne peut pas dépasser le max mana de 10
+- GameState : supprimer le optional du CurrentPlayer
+- hydrate : supprimer les "match Player1 Player2"

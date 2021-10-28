@@ -73,11 +73,22 @@ type GameState = {
         match this.Current with
         | Some player -> player
         | _ -> Player1
+        
     member this.OpponentPlayer = 
         match this.Current with
         | Some Player1 -> Player2
         | Some Player2 -> Player1
         | _ -> Player1
+        
+    member this.CurrentPlayerState =
+        match this.CurrentPlayer with
+        | Player1 -> this.Player1
+        | Player2 -> this.Player2
+        
+    member this.OpponentPlayerState =
+        match this.OpponentPlayer with
+        | Player1 -> this.Player1
+        | Player2 -> this.Player2
 
 type Error = {
     Message: string
@@ -133,9 +144,9 @@ let hydrate (events: Evt list) : GameState =
             | Player2 -> { state with Player2 = { state.Player2 with Mana = state.Player2.ManaMax } }
 
         | PlayerPlayedCard card ->
-            match state.Current with
-            | Some Player1 -> { state with Player1 = { state.Player1 with Mana = state.Player1.Mana - card } }
-            | Some Player2 -> { state with Player2 = { state.Player2 with Mana = state.Player2.Mana - card } }
+            match state.CurrentPlayer with
+            | Player1 -> { state with Player1 = { state.Player1 with Mana = state.Player1.Mana - card } }
+            | Player2 -> { state with Player2 = { state.Player2 with Mana = state.Player2.Mana - card } }
 
         | PlayerEndedTurn player ->
             match player with
@@ -185,22 +196,23 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
         let player1Card1::player1Card2::player1Card3::_ = create.DeckPlayer1
         let player2Card1::player2Card2::player2Card3::_ = create.DeckPlayer2
         
-        Result.Ok [GameCreated {
-                        DeckPlayer1 = create.DeckPlayer1
-                        DeckPlayer2 = create.DeckPlayer2
-                    };
-                   HandInitiated {
-                       Player = Player1
-                       Card1 = player1Card1
-                       Card2 = player1Card2
-                       Card3 = player1Card3
-                    };
-                   HandInitiated {
-                       Player = Player2
-                       Card1 = player2Card1
-                       Card2 = player2Card2
-                       Card3 = player2Card3
-                    }]
+        Result.Ok [
+            GameCreated {
+                DeckPlayer1 = create.DeckPlayer1
+                DeckPlayer2 = create.DeckPlayer2
+            }
+            HandInitiated {
+                Player = Player1
+                Card1 = player1Card1
+                Card2 = player1Card2
+                Card3 = player1Card3
+            }
+            HandInitiated {
+                Player = Player2
+                Card1 = player2Card1
+                Card2 = player2Card2
+                Card3 = player2Card3
+            }]
 
     | BeginGame beginGameCmd -> 
         let state = hydrate history
@@ -208,47 +220,32 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
 
     | StartNewTurn -> 
         let state = hydrate history
-        let currentPlayer = state.CurrentPlayer
         
-        let deck = match currentPlayer with
-                    | Player1 -> state.Player1.Deck
-                    | Player2 -> state.Player2.Deck
-                            
-        Result.Ok [PlayerGotMana currentPlayer;
-                      PlayerGotManaMax currentPlayer;
-                      PlayerPickedACard {
-                          Player = currentPlayer
-                          Card = deck.[0]
-                        }]
+        Result.Ok [
+            PlayerGotMana state.CurrentPlayer;
+            PlayerGotManaMax state.CurrentPlayer;
+            PlayerPickedACard {
+                Player = state.CurrentPlayer
+                Card = state.CurrentPlayerState.Deck.[0]
+            }]
 
     | PlayCard card ->
         let state = hydrate history
         
-        let getPlayerState = function
-            | Player1 -> state.Player1
-            | Player2 -> state.Player2
-        
-        let currentPlayer = state.CurrentPlayer
-        let currentPlayerState = getPlayerState currentPlayer
-                            
-        if currentPlayerState.Hand |> List.contains card |> not
+        if state.CurrentPlayerState.Hand |> List.contains card |> not
         then Result.Error { Message = "Don't have the card"}
-        elif currentPlayerState.Mana >= card
-        then 
-            let opponent = state.OpponentPlayer
-            let opponentState = getPlayerState opponent
-            
+        elif state.CurrentPlayerState.Mana < card
+        then Result.Error { Message = "Not enough mana" }
+        else
             Result.Ok [
                 yield PlayerPlayedCard card 
                 yield PlayerHealthReduced {
-                    Player = opponent
+                    Player = state.OpponentPlayer
                     HealthReduced = card
                 }
-                if opponentState.Health <= card then
-                    yield PlayerWon currentPlayer
+                if state.OpponentPlayerState.Health <= card then
+                    yield PlayerWon state.CurrentPlayer
             ]
-                
-        else Result.Error { Message = "Not enough mana" }
 
     | EndTurn -> Result.Ok [PlayerEndedTurn Player1]
 
