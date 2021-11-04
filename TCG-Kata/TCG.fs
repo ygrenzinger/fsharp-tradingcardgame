@@ -67,19 +67,14 @@ type PlayerState = {
 type GameState = {
     Player1 : PlayerState
     Player2 : PlayerState
-    Current : Player option
+    CurrentPlayer : Player
 } with 
-    member this.CurrentPlayer =
-        match this.Current with
-        | Some player -> player
-        | _ -> Player1
         
     member this.OpponentPlayer = 
-        match this.Current with
-        | Some Player1 -> Player2
-        | Some Player2 -> Player1
-        | _ -> Player1
-        
+        match this.CurrentPlayer with
+        |  Player1 -> Player2
+        |  Player2 -> Player1
+
     member this.CurrentPlayerState =
         match this.CurrentPlayer with
         | Player1 -> this.Player1
@@ -109,7 +104,14 @@ let initialDeck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]
 
 let hydrate (events: Evt list) : GameState =  
     
+
     let handleEvent state evt =
+
+        let updatePlayerState(player: Player) (update: PlayerState -> PlayerState) = 
+            match player with
+            | Player1 -> { state with Player1 = update state.Player1 }
+            | Player2 -> { state with Player2 = update state.Player2 }
+
         match evt with
         | GameCreated gameCreated ->
             { state with
@@ -117,22 +119,19 @@ let hydrate (events: Evt list) : GameState =
                 Player2 = { state.Player2 with Deck = gameCreated.DeckPlayer2 }
             }
             
-        | FirstPlayerChosen player -> { state with Current = Some player }
+        | FirstPlayerChosen player -> { state with CurrentPlayer = player }
         
         | HandInitiated handInitiated ->
             let pickCards player =
                 [handInitiated.Card1; handInitiated.Card2; handInitiated.Card3]
                 |> List.fold pickCardFromDeck player
             
-            match handInitiated.Player with
-            | Player1 -> { state with Player1 = pickCards state.Player1 }
-            | Player2 -> { state with Player2 = pickCards state.Player2 }
+            updatePlayerState handInitiated.Player pickCards
             
         | PlayerPickedACard pickedACard ->
-            match pickedACard.Player with
-            | Player1 -> { state with Player1 = { state.Player1 with Deck = state.Player1.Deck |> List.skip 1 } }
-            | Player2 -> { state with Player2 = { state.Player2 with Deck = state.Player2.Deck |> List.skip 1 } }
-            
+            updatePlayerState pickedACard.Player (fun playerState ->
+                 {playerState with Deck = playerState.Deck |> List.skip 1})
+
         | PlayerGotMana player ->
             match player with
             | Player1 -> { state with Player1 = { state.Player1 with ManaMax = state.Player1.ManaMax + 1 } }
@@ -150,8 +149,8 @@ let hydrate (events: Evt list) : GameState =
 
         | PlayerEndedTurn player ->
             match player with
-            | Player1 -> { state with Current = Some Player2 }
-            | Player2 -> { state with Current = Some Player1 }
+            | Player1 -> { state with CurrentPlayer = Player2 }
+            | Player2 -> { state with CurrentPlayer = Player1 }
                 
         | PlayerHealthReduced { Player = player; HealthReduced = healthReduced } ->
             match player with
@@ -163,7 +162,7 @@ let hydrate (events: Evt list) : GameState =
     events |> List.fold handleEvent {
         Player1 = { Deck = []; Hand = []; Mana = 0; ManaMax = 0; Health = 30 }
         Player2 = { Deck = []; Hand = []; Mana = 0; ManaMax = 0; Health = 30 }
-        Current = None
+        CurrentPlayer = Player1
     }
 
 type CommandHandler = {
