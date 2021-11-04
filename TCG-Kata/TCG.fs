@@ -104,7 +104,14 @@ let initialDeck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]
 
 let hydrate (events: Evt list) : GameState =  
     
+
     let handleEvent state evt =
+
+        let updatePlayerState(player: Player) (update: PlayerState -> PlayerState) = 
+            match player with
+            | Player1 -> { state with Player1 = update state.Player1 }
+            | Player2 -> { state with Player2 = update state.Player2 }
+
         match evt with
         | GameCreated gameCreated ->
             { state with
@@ -119,15 +126,12 @@ let hydrate (events: Evt list) : GameState =
                 [handInitiated.Card1; handInitiated.Card2; handInitiated.Card3]
                 |> List.fold pickCardFromDeck player
             
-            match handInitiated.Player with
-            | Player1 -> { state with Player1 = pickCards state.Player1 }
-            | Player2 -> { state with Player2 = pickCards state.Player2 }
+            updatePlayerState handInitiated.Player pickCards
             
         | PlayerPickedACard pickedACard ->
-            match pickedACard.Player with
-            | Player1 -> { state with Player1 = { state.Player1 with Deck = state.Player1.Deck |> List.skip 1 } }
-            | Player2 -> { state with Player2 = { state.Player2 with Deck = state.Player2.Deck |> List.skip 1 } }
-            
+            updatePlayerState pickedACard.Player (fun playerState ->
+                 {playerState with Deck = playerState.Deck |> List.skip 1})
+
         | PlayerGotMana player ->
             match player with
             | Player1 -> { state with Player1 = { state.Player1 with ManaMax = state.Player1.ManaMax + 1 } }
