@@ -165,7 +165,7 @@ let ``Choose first player as current player`` () =
             DeckPlayer1 = initialDeck
             DeckPlayer2 = initialDeck
         }; FirstPlayerChosen Player1]
-    test <@ game.Current = Some Player1 @>
+    test <@ game.CurrentPlayer = Player1 @>
     
 [<Fact>]
 let ``Player should pick cards from his deck for his initial hand`` () =
