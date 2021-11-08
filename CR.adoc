@@ -42,6 +42,7 @@ DONE :
 == 08/11/2021
 
 DONE :
+- hydrate : supprimer les "match Player1 Player2"
 - Refactor du code d'exécution des commandes
 
 
@@ -52,4 +53,3 @@ DONE :
     -> aussi règle du "bleeding out"
 - vérifier qu'on ajoute à la main la carte que l'on retire du deck
 - vérifier que l'on ne peut pas dépasser le max mana de 10
-- hydrate : supprimer les "match Player1 Player2"
