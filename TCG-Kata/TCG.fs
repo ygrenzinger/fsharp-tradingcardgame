@@ -162,6 +162,29 @@ type CommandHandler = {
     handle : Cmd -> Evt list -> Result<Evt list, Error>
 }
 
+
+let private createGame (create: CreateGame) =
+    let player1Card1::player1Card2::player1Card3::_ = create.DeckPlayer1
+    let player2Card1::player2Card2::player2Card3::_ = create.DeckPlayer2
+    
+    Result.Ok [
+        GameCreated {
+            DeckPlayer1 = create.DeckPlayer1
+            DeckPlayer2 = create.DeckPlayer2
+        }
+        HandInitiated {
+            Player = Player1
+            Card1 = player1Card1
+            Card2 = player1Card2
+            Card3 = player1Card3
+        }
+        HandInitiated {
+            Player = Player2
+            Card1 = player2Card1
+            Card2 = player2Card2
+            Card3 = player2Card3
+        }]
+
 let private beginGame (cmd: BeginGame) (state: GameState) =
     let firstPlayer = cmd.FirstPlayer
     let opponent = opponentOf firstPlayer    
@@ -177,31 +200,36 @@ let private beginGame (cmd: BeginGame) (state: GameState) =
              Card = card
              }
          ]
+    
+let private startNewTurn state =
+    Result.Ok [
+        PlayerGotMana state.CurrentPlayer;
+        PlayerGotManaMax state.CurrentPlayer;
+        PlayerPickedACard {
+            Player = state.CurrentPlayer
+            Card = state.CurrentPlayerState.Deck.[0]
+        }]
+    
+let private playCard (card: Card) (state: GameState) =
+    if state.CurrentPlayerState.Hand |> List.contains card |> not
+    then Result.Error { Message = "Don't have the card"}
+    elif state.CurrentPlayerState.Mana < card
+    then Result.Error { Message = "Not enough mana" }
+    else
+        Result.Ok [
+            yield PlayerPlayedCard card 
+            yield PlayerHealthReduced {
+                Player = state.OpponentPlayer
+                HealthReduced = card
+            }
+            if state.OpponentPlayerState.Health <= card then
+                yield PlayerWon state.CurrentPlayer
+        ]
 
 let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
     
     match cmd with
-    | CreateGame create -> 
-        let player1Card1::player1Card2::player1Card3::_ = create.DeckPlayer1
-        let player2Card1::player2Card2::player2Card3::_ = create.DeckPlayer2
-        
-        Result.Ok [
-            GameCreated {
-                DeckPlayer1 = create.DeckPlayer1
-                DeckPlayer2 = create.DeckPlayer2
-            }
-            HandInitiated {
-                Player = Player1
-                Card1 = player1Card1
-                Card2 = player1Card2
-                Card3 = player1Card3
-            }
-            HandInitiated {
-                Player = Player2
-                Card1 = player2Card1
-                Card2 = player2Card2
-                Card3 = player2Card3
-            }]
+    | CreateGame createCmd -> createGame createCmd
 
     | BeginGame beginGameCmd -> 
         let state = hydrate history
@@ -209,32 +237,11 @@ let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
 
     | StartNewTurn -> 
         let state = hydrate history
-        
-        Result.Ok [
-            PlayerGotMana state.CurrentPlayer;
-            PlayerGotManaMax state.CurrentPlayer;
-            PlayerPickedACard {
-                Player = state.CurrentPlayer
-                Card = state.CurrentPlayerState.Deck.[0]
-            }]
+        state |> startNewTurn
 
     | PlayCard card ->
         let state = hydrate history
-        
-        if state.CurrentPlayerState.Hand |> List.contains card |> not
-        then Result.Error { Message = "Don't have the card"}
-        elif state.CurrentPlayerState.Mana < card
-        then Result.Error { Message = "Not enough mana" }
-        else
-            Result.Ok [
-                yield PlayerPlayedCard card 
-                yield PlayerHealthReduced {
-                    Player = state.OpponentPlayer
-                    HealthReduced = card
-                }
-                if state.OpponentPlayerState.Health <= card then
-                    yield PlayerWon state.CurrentPlayer
-            ]
+        state |> playCard card
 
     | EndTurn -> Result.Ok [PlayerEndedTurn Player1]
 
