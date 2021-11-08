@@ -65,8 +65,8 @@ type PlayerState = {
 }
 
 let opponentOf = function
-    |  Player1 -> Player2
-    |  Player2 -> Player1
+    | Player1 -> Player2
+    | Player2 -> Player1
 
 type GameState = {
     Player1 : PlayerState
@@ -90,22 +90,10 @@ type Error = {
     Message: string
 }
 
-let pickCardFromDeck player card =
-    let rec removeFirst deck =
-        match deck with
-        | [] -> []
-        | head::tail when head = card -> tail
-        | head::tail -> head::(removeFirst tail)
-    
-    { player with
-        Hand = player.Hand@[card]
-        Deck = removeFirst player.Deck }
-
 let initialDeck = [0;0;1;1;2;2;2;3;3;3;3;4;4;4;5;5;6;6;7;8]
 
 let hydrate (events: Evt list) : GameState =  
     
-
     let handleEvent state evt =
 
         let updatePlayerState (player: Player) (update: PlayerState -> PlayerState) = 
@@ -123,6 +111,17 @@ let hydrate (events: Evt list) : GameState =
         | FirstPlayerChosen player -> { state with CurrentPlayer = player }
         
         | HandInitiated handInitiated ->
+            let pickCardFromDeck player card =
+                let rec removeFirst deck =
+                    match deck with
+                    | [] -> []
+                    | head::tail when head = card -> tail
+                    | head::tail -> head::(removeFirst tail)
+                
+                { player with
+                    Hand = player.Hand@[card]
+                    Deck = removeFirst player.Deck }
+            
             let pickCards player =
                 [handInitiated.Card1; handInitiated.Card2; handInitiated.Card3]
                 |> List.fold pickCardFromDeck player
@@ -165,10 +164,7 @@ type CommandHandler = {
 
 let private beginGame (cmd: BeginGame) (state: GameState) =
     let firstPlayer = cmd.FirstPlayer
-    let opponent = match firstPlayer with
-                   | Player1 -> Player2
-                   | Player2 -> Player1
-    
+    let opponent = opponentOf firstPlayer    
     let deck = match firstPlayer with
                | Player1 -> state.Player2.Deck
                | Player2 -> state.Player1.Deck
