@@ -32,14 +32,20 @@ DONE :
 - perte de vie du joueur adverse quand on joue une carte qui provoque la fin de partie quand l'adversaire n'a plus de vie
 - refactor code des commandes & ajout de méthodes d'extensions sur GameState  
 
+
 == 04/11/2021
 
 DONE :
 - GameState : supprimer le optional du CurrentPlayer
 
 
-== TODO : 
+== 08/11/2021
+
+DONE :
 - Refactor du code d'exécution des commandes
+
+
+== TODO : 
 - Refactor des tests : factory methods pour créer de l'historique pour les commandes  
 - vérifier que le deck est complet (20 cartes) au démarrage (cf: CreateGame)
 - vérifier qu'on ne peut plus piocher de carte si le deck est vide (écrire un test)

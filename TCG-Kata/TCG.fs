@@ -64,16 +64,17 @@ type PlayerState = {
     Health : int
 }
 
+let opponentOf = function
+    |  Player1 -> Player2
+    |  Player2 -> Player1
+
 type GameState = {
     Player1 : PlayerState
     Player2 : PlayerState
     CurrentPlayer : Player
 } with 
         
-    member this.OpponentPlayer = 
-        match this.CurrentPlayer with
-        |  Player1 -> Player2
-        |  Player2 -> Player1
+    member this.OpponentPlayer = opponentOf this.CurrentPlayer
 
     member this.CurrentPlayerState =
         match this.CurrentPlayer with
@@ -107,7 +108,7 @@ let hydrate (events: Evt list) : GameState =
 
     let handleEvent state evt =
 
-        let updatePlayerState(player: Player) (update: PlayerState -> PlayerState) = 
+        let updatePlayerState (player: Player) (update: PlayerState -> PlayerState) = 
             match player with
             | Player1 -> { state with Player1 = update state.Player1 }
             | Player2 -> { state with Player2 = update state.Player2 }
@@ -130,32 +131,25 @@ let hydrate (events: Evt list) : GameState =
             
         | PlayerPickedACard pickedACard ->
             updatePlayerState pickedACard.Player (fun playerState ->
-                 {playerState with Deck = playerState.Deck |> List.skip 1})
+                { playerState with Deck = playerState.Deck |> List.skip 1 })
 
         | PlayerGotMana player ->
-            match player with
-            | Player1 -> { state with Player1 = { state.Player1 with ManaMax = state.Player1.ManaMax + 1 } }
-            | Player2 -> { state with Player2 = { state.Player2 with ManaMax = state.Player2.ManaMax + 1 } }
+            updatePlayerState player (fun playerState ->
+                { playerState with ManaMax = playerState.ManaMax + 1 })
             
-        | PlayerGotManaMax player -> 
-            match player with
-            | Player1 -> { state with Player1 = { state.Player1 with Mana = state.Player1.ManaMax } }
-            | Player2 -> { state with Player2 = { state.Player2 with Mana = state.Player2.ManaMax } }
+        | PlayerGotManaMax player ->
+            updatePlayerState player (fun playerState ->
+                { playerState with Mana = playerState.ManaMax })
 
         | PlayerPlayedCard card ->
-            match state.CurrentPlayer with
-            | Player1 -> { state with Player1 = { state.Player1 with Mana = state.Player1.Mana - card } }
-            | Player2 -> { state with Player2 = { state.Player2 with Mana = state.Player2.Mana - card } }
+            updatePlayerState state.CurrentPlayer (fun playerState ->
+                { playerState with Mana = playerState.Mana - card })
 
-        | PlayerEndedTurn player ->
-            match player with
-            | Player1 -> { state with CurrentPlayer = Player2 }
-            | Player2 -> { state with CurrentPlayer = Player1 }
+        | PlayerEndedTurn player -> { state with CurrentPlayer = opponentOf player }
                 
         | PlayerHealthReduced { Player = player; HealthReduced = healthReduced } ->
-            match player with
-            | Player1 -> { state with Player1 = { state.Player1 with Health = state.Player1.Health - healthReduced } }
-            | Player2 -> { state with Player2 = { state.Player2 with Health = state.Player2.Health - healthReduced } }
+            updatePlayerState player (fun playerState ->
+                { playerState with Health = playerState.Health - healthReduced })
                 
         | _ -> state
    
