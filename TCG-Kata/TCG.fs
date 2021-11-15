@@ -44,6 +44,11 @@ type GameCreated = {
     DeckPlayer2 : Card list
 }
 
+type DiscardedACard = {
+    Player : Player
+    Card : Card
+}
+
 type Evt =
     | GameCreated of GameCreated
     | FirstPlayerChosen of Player
@@ -53,6 +58,7 @@ type Evt =
     | PlayerGotManaMax of Player
     | PlayerEndedTurn of Player
     | PlayerPlayedCard of Card
+    | DiscardedACard of DiscardedACard 
     | PlayerHealthReduced of PlayerHealthReduced
     | PlayerWon of Player
 
@@ -130,7 +136,9 @@ let hydrate (events: Evt list) : GameState =
             
         | PlayerPickedACard pickedACard ->
             updatePlayerState pickedACard.Player (fun playerState ->
-                { playerState with Deck = playerState.Deck |> List.skip 1 })
+                { playerState with
+                    Hand = playerState.Hand@(playerState.Deck |> List.take 1)
+                    Deck = playerState.Deck |> List.skip 1 })
 
         | PlayerGotMana player ->
             updatePlayerState player (fun playerState ->
@@ -203,12 +211,18 @@ let private beginGame (cmd: BeginGame) (state: GameState) =
     
 let private startNewTurn state =
     Result.Ok [
-        PlayerGotMana state.CurrentPlayer;
-        PlayerGotManaMax state.CurrentPlayer;
-        PlayerPickedACard {
-            Player = state.CurrentPlayer
-            Card = state.CurrentPlayerState.Deck.[0]
-        }]
+        yield PlayerGotMana state.CurrentPlayer
+        yield PlayerGotManaMax state.CurrentPlayer
+        if state.CurrentPlayerState.Hand.Length < 5 then
+            yield PlayerPickedACard {
+                Player = state.CurrentPlayer
+                Card = state.CurrentPlayerState.Deck.[0]
+            }
+        else
+            yield DiscardedACard {
+                Player = state.CurrentPlayer
+                Card = state.CurrentPlayerState.Deck.[0]
+            }]
     
 let private playCard (card: Card) (state: GameState) =
     if state.CurrentPlayerState.Hand |> List.contains card |> not

@@ -313,3 +313,27 @@ let ``The game ends when a player loose all its health`` () =
                  HealthReduced = 1
             }
             PlayerWon Player.Player1 ] @>
+    
+[<Fact>]
+let ``Next card from deck is destroyed when player has already 5 cards in hands`` () =
+    let beginHistory = beginHistory [0;1;5;0;5;8;4] [0;1;2;3;2]
+    let history =
+        beginHistory@[
+            PlayerPickedACard {
+                Player = Player1
+                Card = 0
+            }
+            PlayerPickedACard {
+                Player = Player1
+                Card = 5
+            }]
+    let cmd = StartNewTurn
+    let event = createCommandHandler.handle cmd history
+    test <@ event = Result.Ok [
+        PlayerGotMana Player1;
+        PlayerGotManaMax Player1;
+        DiscardedACard {
+            Player = Player1
+            Card = 8
+        }
+    ] @>
