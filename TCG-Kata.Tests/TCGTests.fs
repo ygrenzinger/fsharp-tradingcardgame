@@ -359,3 +359,16 @@ let ``The discarded card cannot be picked``() =
         }
     ] @>
     
+[<Fact>]
+let ``The discarded card cannot be played``() =
+    let beginHistory = beginHistory [0;1;5;3;8;4] [0;1;2;3;2]
+    let history =
+        beginHistory@[
+            DiscardedACard {
+                Player = Player1
+                Card = 3
+            }
+        ]
+    let cmd = PlayCard 3
+    let event = createCommandHandler.handle cmd history
+    test <@ event = Result.Error { Message = "Don't have the card"} @>
