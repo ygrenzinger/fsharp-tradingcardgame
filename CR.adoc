@@ -45,11 +45,19 @@ DONE :
 - hydrate : supprimer les "match Player1 Player2"
 - Refactor du code d'exécution des commandes
 
+== 15/11/2021
+DONE:
+- Limite de 5 cartes dans la main
+- On ne peut pas jouer les cartes défaussées
+
+== 22//11/2021
+TRAGET:
+- Bleeding out
 
 == TODO : 
-- Refactor des tests : factory methods pour créer de l'historique pour les commandes  
-- vérifier que le deck est complet (20 cartes) au démarrage (cf: CreateGame)
 - vérifier qu'on ne peut plus piocher de carte si le deck est vide (écrire un test)
     -> aussi règle du "bleeding out"
+- Refactor des tests : factory methods pour créer de l'historique pour les commandes  
+- vérifier que le deck est complet (20 cartes) au démarrage (cf: CreateGame)
 - vérifier qu'on ajoute à la main la carte que l'on retire du deck
 - vérifier que l'on ne peut pas dépasser le max mana de 10

@@ -372,3 +372,4 @@ let ``The discarded card cannot be played``() =
     let cmd = PlayCard 3
     let event = createCommandHandler.handle cmd history
     test <@ event = Result.Error { Message = "Don't have the card"} @>
+
