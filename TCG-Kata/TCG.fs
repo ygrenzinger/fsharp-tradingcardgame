@@ -139,6 +139,10 @@ let hydrate (events: Evt list) : GameState =
                 { playerState with
                     Hand = playerState.Hand@(playerState.Deck |> List.take 1)
                     Deck = playerState.Deck |> List.skip 1 })
+            
+        | DiscardedACard discardedCard ->
+            updatePlayerState discardedCard.Player (fun playerState ->
+                { playerState with Deck = playerState.Deck |> List.skip 1 })
 
         | PlayerGotMana player ->
             updatePlayerState player (fun playerState ->
