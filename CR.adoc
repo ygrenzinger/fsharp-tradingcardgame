@@ -53,13 +53,12 @@ DONE:
 == 22/11/2021
 DONE:
 - Bleeding out
+- Refactoring of damages
 
 
 
 
 == TODO : 
-- vérifier qu'on ne peut plus piocher de carte si le deck est vide (écrire un test)
-    -> aussi règle du "bleeding out"
 - Refactor des tests : factory methods pour créer de l'historique pour les commandes  
 - vérifier que le deck est complet (20 cartes) au démarrage (cf: CreateGame)
 - vérifier qu'on ajoute à la main la carte que l'on retire du deck
