@@ -387,3 +387,24 @@ let ``Bleeding out : active player looses health it can't draw a card``() =
         }
     ] @>
  
+ 
+[<Fact>]
+let ``Bleeding out can end the game``() =
+    let beginHistory = beginHistory [0;1;5] [0;1;2;3]
+    let history =
+        beginHistory@[
+            PlayerHealthReduced {
+                 Player = Player.Player1
+                 HealthReduced = 29
+             }]
+    let cmd = StartNewTurn
+    let event = createCommandHandler.handle cmd history
+    test <@ event = Result.Ok [
+        PlayerGotMana Player1;
+        PlayerGotManaMax Player1;
+        PlayerHealthReduced {
+             Player = Player.Player1
+             HealthReduced = 1
+        }
+        PlayerWon Player.Player2
+    ] @>

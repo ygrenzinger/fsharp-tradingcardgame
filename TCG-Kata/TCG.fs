@@ -222,6 +222,8 @@ let private startNewTurn state =
                 Player = state.CurrentPlayer
                 HealthReduced = 1
             }
+            if state.CurrentPlayerState.Health = 1 then
+                yield PlayerWon state.OpponentPlayer 
         elif state.CurrentPlayerState.Hand.Length < 5 then
             yield PlayerPickedACard {
                 Player = state.CurrentPlayer
