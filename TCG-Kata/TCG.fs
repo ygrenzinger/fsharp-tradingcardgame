@@ -212,18 +212,32 @@ let private beginGame (cmd: BeginGame) (state: GameState) =
              Card = card
              }
          ]
+
+let private reduceOpponentHealth (state: GameState) damages =
+    [
+        yield PlayerHealthReduced {
+            Player = state.OpponentPlayer
+            HealthReduced = damages
+        }
+        if state.OpponentPlayerState.Health <= damages then
+            yield PlayerWon state.CurrentPlayer
+    ]
+let private reduceSelfHealth state damages =
+    [
+        yield PlayerHealthReduced {
+            Player = state.CurrentPlayer
+            HealthReduced = damages
+        }
+        if state.CurrentPlayerState.Health <= damages then
+            yield PlayerWon state.OpponentPlayer
+    ]
     
 let private startNewTurn state =
     Result.Ok [
         yield PlayerGotMana state.CurrentPlayer
         yield PlayerGotManaMax state.CurrentPlayer
         if state.CurrentPlayerState.Deck.Length = 0 then
-            yield PlayerHealthReduced {
-                Player = state.CurrentPlayer
-                HealthReduced = 1
-            }
-            if state.CurrentPlayerState.Health = 1 then
-                yield PlayerWon state.OpponentPlayer 
+            yield! reduceSelfHealth state 1
         elif state.CurrentPlayerState.Hand.Length < 5 then
             yield PlayerPickedACard {
                 Player = state.CurrentPlayer
@@ -243,12 +257,7 @@ let private playCard (card: Card) (state: GameState) =
     else
         Result.Ok [
             yield PlayerPlayedCard card 
-            yield PlayerHealthReduced {
-                Player = state.OpponentPlayer
-                HealthReduced = card
-            }
-            if state.OpponentPlayerState.Health <= card then
-                yield PlayerWon state.CurrentPlayer
+            yield! reduceOpponentHealth state card
         ]
 
 let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =

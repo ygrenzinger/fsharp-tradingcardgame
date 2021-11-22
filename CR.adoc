@@ -50,9 +50,12 @@ DONE:
 - Limite de 5 cartes dans la main
 - On ne peut pas jouer les cartes défaussées
 
-== 22//11/2021
-TRAGET:
+== 22/11/2021
+DONE:
 - Bleeding out
+
+
+
 
 == TODO : 
 - vérifier qu'on ne peut plus piocher de carte si le deck est vide (écrire un test)
