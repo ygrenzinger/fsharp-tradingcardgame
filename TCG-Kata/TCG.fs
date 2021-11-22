@@ -82,15 +82,16 @@ type GameState = {
         
     member this.OpponentPlayer = opponentOf this.CurrentPlayer
 
-    member this.CurrentPlayerState =
-        match this.CurrentPlayer with
+    member this.stateOf player =
+        match player with
         | Player1 -> this.Player1
         | Player2 -> this.Player2
+    
+    member this.CurrentPlayerState =
+        this.stateOf this.CurrentPlayer
         
     member this.OpponentPlayerState =
-        match this.OpponentPlayer with
-        | Player1 -> this.Player1
-        | Player2 -> this.Player2
+        this.stateOf this.OpponentPlayer
 
 type Error = {
     Message: string
@@ -213,23 +214,15 @@ let private beginGame (cmd: BeginGame) (state: GameState) =
              }
          ]
 
-let private reduceOpponentHealth (state: GameState) damages =
+
+let private reduceHealth (state: GameState) target damages =
     [
         yield PlayerHealthReduced {
-            Player = state.OpponentPlayer
+            Player = target
             HealthReduced = damages
         }
-        if state.OpponentPlayerState.Health <= damages then
-            yield PlayerWon state.CurrentPlayer
-    ]
-let private reduceSelfHealth state damages =
-    [
-        yield PlayerHealthReduced {
-            Player = state.CurrentPlayer
-            HealthReduced = damages
-        }
-        if state.CurrentPlayerState.Health <= damages then
-            yield PlayerWon state.OpponentPlayer
+        if (state.stateOf target).Health <= damages then
+            yield PlayerWon (opponentOf target)
     ]
     
 let private startNewTurn state =
@@ -237,7 +230,7 @@ let private startNewTurn state =
         yield PlayerGotMana state.CurrentPlayer
         yield PlayerGotManaMax state.CurrentPlayer
         if state.CurrentPlayerState.Deck.Length = 0 then
-            yield! reduceSelfHealth state 1
+            yield! reduceHealth state state.CurrentPlayer 1
         elif state.CurrentPlayerState.Hand.Length < 5 then
             yield PlayerPickedACard {
                 Player = state.CurrentPlayer
@@ -257,7 +250,7 @@ let private playCard (card: Card) (state: GameState) =
     else
         Result.Ok [
             yield PlayerPlayedCard card 
-            yield! reduceOpponentHealth state card
+            yield! reduceHealth state state.OpponentPlayer card
         ]
 
 let apply (cmd: Cmd) (history: Evt list) : Result<Evt list, Error> =
