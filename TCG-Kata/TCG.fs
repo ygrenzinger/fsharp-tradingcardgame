@@ -217,7 +217,12 @@ let private startNewTurn state =
     Result.Ok [
         yield PlayerGotMana state.CurrentPlayer
         yield PlayerGotManaMax state.CurrentPlayer
-        if state.CurrentPlayerState.Hand.Length < 5 then
+        if state.CurrentPlayerState.Deck.Length = 0 then
+            yield PlayerHealthReduced {
+                Player = state.CurrentPlayer
+                HealthReduced = 1
+            }
+        elif state.CurrentPlayerState.Hand.Length < 5 then
             yield PlayerPickedACard {
                 Player = state.CurrentPlayer
                 Card = state.CurrentPlayerState.Deck.[0]
